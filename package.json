@@ -1,0 +1,51 @@
+{
+  "name": "multifeed-osm",
+  "description": "Peer-to-peer OpenStreetMap database over multifeed.",
+  "author": "Stephen Whitmore <sww@eight.net>",
+  "version": "4.4.1",
+  "repository": {
+    "url": "git://github.com/noffle/multifeed-osm.git"
+  },
+  "homepage": "https://github.com/noffle/multifeed-osm",
+  "bugs": "https://github.com/noffle/multifeed-osm/issues",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test/*.js",
+    "lint": "standard",
+    "coverage": "nyc npm test && nyc report --reporter=lcov"
+  },
+  "keywords": [
+    "osm",
+    "osm-p2p",
+    "osm-p2p-db",
+    "openstreetmap",
+    "p2p",
+    "peer",
+    "multifeed"
+  ],
+  "dependencies": {
+    "collect-stream": "^1.2.1",
+    "comparable-storable-types": "^1.0.0",
+    "d64": "^1.0.0",
+    "deepmerge": "^2.0.1",
+    "multifeed-index": "^2.0.2",
+    "once": "^1.4.0",
+    "randombytes": "^2.0.5",
+    "read-only-stream": "^2.0.0",
+    "subleveldown": "^2.1.0",
+    "through2": "^2.0.3",
+    "to-buffer": "^1.1.0",
+    "uniq": "^1.0.1",
+    "varint": "^5.0.0"
+  },
+  "devDependencies": {
+    "grid-point-store": "^2.0.0",
+    "memdb": "^1.3.1",
+    "multifeed": "^1.2.0",
+    "nyc": "^11.3.0",
+    "random-access-memory": "^2.4.0",
+    "standard": "~10.0.0",
+    "tape": "~4.6.2"
+  },
+  "license": "ISC"
+}
