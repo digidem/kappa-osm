@@ -26,7 +26,7 @@ var db = multifeed(hypercore, ram, { valueEncoding: 'json' }))
 var indexes = memdb()
 var geo = Geo(memdb())
 var osm = Osm({
-  db: db,
+  log: db,
   index: indexes,
   spatial: geo
 })
@@ -166,28 +166,10 @@ The following [algorithm](https://wiki.openstreetmap.org/wiki/API_v0.6#Retrievin
    referenced by a relation are not returned by virtue of being in that
    relation.)
 
-### var rs = osm.getChanges(id[, cb])
+### var rs = osm.refs(id[, cb])
 
-Fetch a list of all OSM elements belonging to the changeset `id`.
-
-A callback parameter `cb` is optional. If given, it will be called as `cb(err,
-results)`. If not provided or set to `null`, a Readable stream will be returned
-that can be read from as results are ready.
-
-Objects of the following form are returned:
-
-```js
-{
-  id: '...',
-  version: '...'
-}
-```
-
-### var rs = osm.getReferrers(id[, cb])
-
-Fetch a list of all OSM ways and relations that refer to the element with ID
-`id`. For a node, this can be ways or relations. For a way or relation, this can
-only be relations.
+Fetch a list of all OSM elements that refer to the id `id`. This will capture
+referrals by changeset, way membership, or relation membership.
 
 A callback parameter `cb` is optional. If given, it will be called as `cb(err,
 results)`. If not provided or set to `null`, a Readable stream will be returned
@@ -201,29 +183,6 @@ Objects of the following form are returned:
   version: '...'
 }
 ```
-
-### osm.getPreviousHeads(version, cb)
-
-Get all immediately previous versions of the element at `version`.
-
-In the simple case of one writer writing an element and then updating it,
-
-```
-A_1  <--  A_2
-```
-
-`getPreviousHeads(A_2)` would return `[A_2]`.
-
-In a more complex case of two writers that both forked `C_1` and then one wrote
-a new head to merge them,
-
-```
-        /-- C_2 <--\
-C_1 <---            --- C4
-        \-- C_3 <--/
-```
-
-`getPreviousHeads(C_4)` would return `[C_2, C_3]`.
 
 ## Architecture
 

@@ -18,17 +18,17 @@ module.exports = Osm
 
 function Osm (opts) {
   if (!(this instanceof Osm)) return new Osm(opts)
-  if (!opts.db) throw new Error('missing param "db"')
+  if (!opts.log) throw new Error('missing param "log"')
   if (!opts.index) throw new Error('missing param "index"')
   if (!opts.spatial) throw new Error('missing param "spatial"')
 
-  this.db = opts.db
+  this.log = opts.log
   this.index = opts.index
   this.spatial = opts.spatial
 
   // Create indexes
-  this.refs = createRefsIndex(this.db, this.index)
-  this.geo = createGeoIndex(this.db, sub(this.index, 'geo'), this.spatial)
+  this.refs = createRefsIndex(this.log, this.index)
+  this.geo = createGeoIndex(this.log, sub(this.index, 'geo'), this.spatial)
 }
 
 Osm.prototype.ready = function (cb) {
@@ -53,7 +53,7 @@ Osm.prototype.create = function (element, cb) {
   // Generate unique ID for element
   var id = utils.generateId()
 
-  // Write the element to the db
+  // Write the element to the log
   var key = id
   // console.log('creating', key, '->', element)
   this.db.put(key, element, function (err, node) {
@@ -495,7 +495,7 @@ Osm.prototype.getPreviousHeads = function (osmVersion, cb) {
 }
 
 Osm.prototype.createReplicationStream = function (opts) {
-  return this.db.replicate(opts)
+  return this.log.replicate(opts)
 }
 Osm.prototype.replicate = Osm.prototype.createReplicationStream
 
