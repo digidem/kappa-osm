@@ -85,8 +85,7 @@ test('create good nodes', function (t) {
   var db = createDb()
 
   nodes.forEach(function (node, i) {
-    db.create(node, function (err, node) {
-      var elm = node.element
+    db.create(node, function (err, elm) {
       t.error(err)
       t.ok(elm)
       if (i === 0) {
@@ -96,8 +95,8 @@ test('create good nodes', function (t) {
         t.equal(elm.lat, '-13')
         t.equal(elm.lon, '-12')
       }
-      t.ok(node.id)
-      t.ok(node.version)
+      t.ok(elm.id)
+      t.ok(elm.version)
     })
   })
 })
@@ -201,16 +200,15 @@ test('create good ways', function (t) {
     }
   ]
 
-  t.plan(ways.length * 4)
+  t.plan(ways.length * 3)
 
   var db = createDb()
 
   ways.forEach(function (node) {
-    db.create(node, function (err, node) {
+    db.create(node, function (err, elm) {
       t.error(err)
-      t.ok(node.id)
-      t.ok(node.version)
-      t.ok(node.element)
+      t.ok(elm.id)
+      t.ok(elm.version)
     })
   })
 })
@@ -296,16 +294,15 @@ test('create good relations', function (t) {
     }
   ]
 
-  t.plan(relations.length * 4)
+  t.plan(relations.length * 3)
 
   var db = createDb()
 
   relations.forEach(function (node) {
-    db.create(node, function (err, node) {
+    db.create(node, function (err, elm) {
       t.error(err)
-      t.ok(node.id)
-      t.ok(node.version)
-      t.ok(node.element)
+      t.ok(elm.id)
+      t.ok(elm.version)
     })
   })
 })
@@ -404,16 +401,15 @@ test('create good changesets', function (t) {
     }
   ]
 
-  t.plan(changesets.length * 4)
+  t.plan(changesets.length * 3)
 
   var db = createDb()
 
   changesets.forEach(function (node) {
-    db.create(node, function (err, node) {
+    db.create(node, function (err, elm) {
       t.error(err)
-      t.ok(node.id)
-      t.ok(node.version)
-      t.ok(node.element)
+      t.ok(elm.id)
+      t.ok(elm.version)
     })
   })
 })
@@ -438,7 +434,7 @@ test('create bad changesets', function (t) {
 })
 
 test('create changeset', function (t) {
-  t.plan(4)
+  t.plan(3)
 
   var db = createDb()
 
@@ -446,11 +442,10 @@ test('create changeset', function (t) {
     type: 'changeset'
   }
 
-  db.create(changes, function (err, node) {
+  db.create(changes, function (err, elm) {
     t.error(err)
-    t.ok(node.id)
-    t.ok(node.version)
-    t.ok(node.element)
+    t.ok(elm.id)
+    t.ok(elm.version)
   })
 })
 

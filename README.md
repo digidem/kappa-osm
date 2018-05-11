@@ -22,11 +22,11 @@ var ram = require('random-access-memory')
 var memdb = require('memdb')
 var Geo = require('grid-point-store')
 
-var db = multifeed(hypercore, ram, { valueEncoding: 'json' }))
+var logs = multifeed(hypercore, ram, { valueEncoding: 'json' }))
 var indexes = memdb()
 var geo = Geo(memdb())
 var osm = Osm({
-  log: db,
+  logs: logs,
   index: indexes,
   spatial: geo
 })
@@ -68,11 +68,11 @@ created node with id 78d06921416fe95b
 var Osm = require('multifeed-osm')
 ```
 
-### var db = Osm(opts)
+### var osm = Osm(opts)
 
 Expected `opts` include:
 
-- `db`: a [multifeed](https://github.com/noffle/multifeed) instance
+- `logs`: a [multifeed](https://github.com/noffle/multifeed) instance
 - `index`: a [levelup](https://github.com/level/levelup) instance
 - `spatial`: a [grid-point-store](https://github.com/noffle/grid-point-store)
   instance

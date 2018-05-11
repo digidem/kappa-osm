@@ -181,11 +181,14 @@ test('soft delete a node', function (t) {
     t.error(err)
     db.put(elm.id, nodeDeletion, function (err) {
       t.error(err)
-      db.get(elm.id, function (err, nodes) {
+      db.get(elm.id, function (err, elms) {
         t.error(err)
-        t.equals(nodes.length, 1)
-        t.equals(nodes[0].id, elm.id)
-        t.deepEquals(nodes[0].element, nodeDeletion)
+        t.equals(elms.length, 1)
+        t.equals(elms[0].id, elm.id)
+        delete elms[0].id
+        delete elms[0].version
+        console.log('elms', elms)
+        t.deepEquals(elms[0], nodeDeletion)
       })
     })
   })

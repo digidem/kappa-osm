@@ -19,28 +19,26 @@ module.exports = Osm
 
 function Osm (opts) {
   if (!(this instanceof Osm)) return new Osm(opts)
-  if (!opts.log) throw new Error('missing param "log"')
+  if (!opts.logs) throw new Error('missing param "logs"')
   if (!opts.index) throw new Error('missing param "index"')
   if (!opts.spatial) throw new Error('missing param "spatial"')
 
   var self = this
 
-  this.log = opts.log
+  this.logs = opts.logs
   this.index = opts.index
   this.spatial = opts.spatial
 
   this.writer = null
   this.readyFns = []
-  this.log.writer('default', function (err, writer) {
+  this.logs.writer('default', function (err, writer) {
     self.writer = writer
     self.readyFns.forEach(function (fn) { fn() })
     self.readyFns = []
   })
 
   // Create indexes
-  // this.refs = createRefsIndex(this.log, this.index)
-  // this.geo = createGeoIndex(this.log, sub(this.index, 'geo'), this.spatial)
-  this.kv = createKvIndex(this.log, sub(this.index, 'kv'), this.spatial)
+  this.kv = createKvIndex(this.logs, sub(this.index, 'kv'), this.spatial)
 }
 
 // Is the log ready for writing?
@@ -70,7 +68,7 @@ Osm.prototype.create = function (element, cb) {
 Osm.prototype.get = function (id, cb) {
   var self = this
 
-  var res = []
+  var elms = []
   var error
   var pending = 0
 
@@ -87,24 +85,36 @@ Osm.prototype.get = function (id, cb) {
     })
   })
 
-  function done (err, node) {
+  function done (err, elm) {
     if (err) error = err
-    if (node) res.push(node)
+    if (elm) elms.push(elm)
     if (--pending) return
     if (error) cb(error)
-    else cb(null, res)
+    else cb(null, elms)
   }
 }
 
-Osm.prototype.getByVersion = function (version, cb) {
+// String -> [Message]
+Osm.prototype._getByVersion = function (version, cb) {
   var key = version.split('@')[0]
   var seq = version.split('@')[1]
-  var feed = this.log.feed(new Buffer(key, 'hex'))
+  var feed = this.logs.feed(new Buffer(key, 'hex'))
   if (feed) {
     feed.get(seq, cb)
   } else {
     cb(null, null)
   }
+}
+
+// OsmVersion -> [OsmElement]
+Osm.prototype.getByVersion = function (version, cb) {
+  this._getByVersion(version, function (err, msg) {
+    if (err) return cb(err)
+    var elm = msg.element
+    elm.id = msg.id
+    elm.version = version
+    cb(null, elm)
+  })
 }
 
 // OsmId, OsmElement -> OsmElement
@@ -122,22 +132,22 @@ Osm.prototype.put = function (id, element, opts, cb) {
   if (errs.length) return cb(errs[0])
 
   // TODO: how are 'links' passed in? opts.links?
-  var data = {
+  var msg = {
     type: 'osm/element',
     id: id,
     element: element
   }
 
-  console.log('put', id, '->', element)
+  console.log('put', msg)
 
   this.kv.ready(function () {
     if (opts.links) {
-      data.links = opts.links
+      msg.links = opts.links
       write()
     } else {
       self.kv.get(id, function (err, versions) {
         if (err) return cb(err)
-        data.links = versions
+        msg.links = versions
         write()
       })
     }
@@ -145,11 +155,11 @@ Osm.prototype.put = function (id, element, opts, cb) {
 
   function write () {
     self._ready(function () {
-      self.writer.append(data, function (err) {
+      self.writer.append(msg, function (err) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') + '@' + (self.writer.length-1)
-        var node = xtend(data, { version: version })
-        cb(null, node)
+        var elm = xtend(element, { id: id, version: version })
+        cb(null, elm)
       })
     })
   }
@@ -520,7 +530,7 @@ Osm.prototype.query = function (bbox, opts, cb) {
 }
 
 Osm.prototype.createReplicationStream = function (opts) {
-  return this.log.replicate(opts)
+  return this.logs.replicate(opts)
 }
 Osm.prototype.replicate = Osm.prototype.createReplicationStream
 

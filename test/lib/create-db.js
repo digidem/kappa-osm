@@ -9,9 +9,9 @@ module.exports = createOne
 module.exports.two = createTwo
 
 function createOne () {
-  var log = multifeed(hypercore, ram, { valueEncoding: 'json' })
+  var logs = multifeed(hypercore, ram, { valueEncoding: 'json' })
   return Osm({
-    log: log,
+    logs: logs,
     index: memdb(),
     spatial: Grid({ store: memdb(), zoomLevel: 10 })
   })
