@@ -4,7 +4,7 @@
 
 ## Current Status
 
-*Experimental*
+*IN DEVELOPMENT*
 
 Expect plenty of breaking changes -- [semver](https://semver.org/) will be
 respected. This isn't currently ready to be relied upon by other modules!
