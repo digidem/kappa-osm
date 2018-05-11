@@ -38,7 +38,7 @@ test('changeset: get elements', function (t) {
       t.ifError(err)
       db.create(relation, function (err, elm3) {
         t.ifError(err)
-        db.getChanges('9', function (err, res) {
+        db.refs('9', function (err, res) {
           t.ifError(err)
           res = res.map(function (x) { return x.id })
           var expected = [elm1.id, elm2.id, elm3.id].sort()
