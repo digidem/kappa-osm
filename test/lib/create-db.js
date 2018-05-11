@@ -19,9 +19,9 @@ function createOne () {
 
 function createTwo (cb) {
   var a = createOne()
-  a.db.ready(function () {
-    var b = createOne(a.db.key)
-    b.db.ready(function () {
+  a.ready(function () {
+    var b = createOne()
+    b.ready(function () {
       cb(a, b)
     })
   })

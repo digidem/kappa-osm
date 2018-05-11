@@ -8,6 +8,7 @@ var utils = require('./lib/utils')
 var once = require('once')
 var xtend = require('xtend')
 var uniq = require('uniq')
+var merge = require('deepmerge')
 
 var checkElement = require('./lib/check-element')
 var validateBoundingBox = require('./lib/utils').validateBoundingBox
@@ -140,6 +141,7 @@ Osm.prototype.put = function (id, element, opts, cb) {
 
   console.log('put', msg)
 
+  // set links
   this.kv.ready(function () {
     if (opts.links) {
       msg.links = opts.links
@@ -153,6 +155,7 @@ Osm.prototype.put = function (id, element, opts, cb) {
     }
   })
 
+  // write to the feed
   function write () {
     self._ready(function () {
       self.writer.append(msg, function (err) {
@@ -179,104 +182,140 @@ Osm.prototype.del = function (id, element, opts, cb) {
   var errs = checkElement(element, 'del')
   if (errs.length) return cb(errs[0])
 
-  throw new Error('not implemented')
+  getLinks(function (err, links) {
+    if (err) return cb(err)
+    getElms(links, function (err, elms) {
+      if (err) return cb(err)
+      var refs = self._mergeElementRefsAndMembers(elms)
+      var msg = {
+        type: 'osm/element',
+        id: id,
+        element: xtend({deleted: true}, element),
+        links: links
+      }
+      if (refs.refs) msg.element.refs = refs.refs
+      else if (refs.members) msg.element.members = refs.members
+      write(msg, cb)
+    })
+  })
 
-//   // Retrieve the combined refs/members of all previous known heads.
-//   this._getRefsMembers(id, function (err, res) {
-//     if (err) return cb(err)
-// 
-//     var base = { deleted: true }
-//     if (res.refs) base.refs = res.refs
-//     else if (res.members) base.members = res.members
-// 
-//     var elmCopy = merge(element, base)
-// 
-//     // Write to hyperdb
-//     var key = id
-//     // console.log('deleting', key, '->', elmCopy)
-// 
-//     self.db.put(key, elmCopy, function (err, node) {
-//       if (err) return cb(err)
-//       var version = utils.versionFromKeySeq(self.db._localWriter.key, node.seq)
-//       var elm = merge(node.value, { id: id, version: version })
-//       cb(null, elm)
-//     })
-//   })
+  // Get links
+  function getLinks (cb) {
+    self.kv.ready(function () {
+      if (opts.links) {
+        cb(null, opts.links)
+      } else {
+        self.kv.get(id, function (err, versions) {
+          if (err) return cb(err)
+          cb(null, versions)
+        })
+      }
+    })
+  }
+
+  function getElms (links, cb) {
+    if (!links.length) return cb(null, [])
+
+    var res = []
+    var error
+    var pending = links.length
+    for (var i=0; i < links.length; i++) {
+      self.getByVersion(links[i], onElm)
+    }
+
+    function onElm (err, elm) {
+      if (err) error = err
+      if (--pending) return
+      if (error) return cb(error)
+      cb(null, res)
+    }
+  }
+
+  // write to the feed
+  function write (msg, cb) {
+    console.log('del', msg)
+    self._ready(function () {
+      self.writer.append(msg, function (err) {
+        if (err) return cb(err)
+        var version = self.writer.key.toString('hex') + '@' + (self.writer.length-1)
+        var elm = xtend(element, { id: id, version: version })
+        cb(null, elm)
+      })
+    })
+  }
 }
 
 // TODO: should element validation happen on batch jobs?
-Osm.prototype.batch = function (ops, cb) {
-  if (!ops || !ops.length) return cb()
-
-  var self = this
-  cb = once(cb)
-
-  throw new Error('not implemented')
-
-//  // Populate way & relation deletions with correct refs/members.
-//  var pending = 0
-//  var error
-//  for (var i = 0; i < ops.length; i++) {
-//    if (ops[i].type === 'del') {
-//      pending++
-//      updateRefs(ops[i].id, ops[i].value, function (err) {
-//        if (err) error = err
-//        if (!--pending) write(error)
-//      })
-//    }
-//  }
-//  if (!pending) write()
-//
-//  function write (err) {
-//    if (err) return cb(err)
-//
-//    var batch = ops.map(osmOpToHyperdbOp)
-//
-//    self.db.batch(batch, function (err, res) {
-//      if (err) return cb(err)
-//      res = res.map(function (node, n) {
-//        return merge(node.value, {
-//          id: hyperdbKeyToId(batch[n].key),
-//          version: utils.versionFromKeySeq(self.db._writers[node.feed].key, node.seq)
-//        })
-//      })
-//      cb(null, res)
-//    })
-//  }
-//
-//  function updateRefs (id, elm, cb) {
-//    self._getRefsMembers(id, function (err, res) {
-//      if (err) return cb(err)
-//      if (res.refs) elm.refs = res.refs
-//      else if (res.members) elm.members = res.members
-//      cb()
-//    })
-//  }
-//
-//  function hyperdbKeyToId (key) {
-//    return key.substring(key.lastIndexOf('/') + 1)
-//  }
-//
-//  function osmOpToHyperdbOp (op) {
-//    var id = (op.id || utils.generateId())
-//
-//    if (op.type === 'put') {
-//      return {
-//        type: 'put',
-//        key: id,
-//        value: op.value
-//      }
-//    } else if (op.type === 'del') {
-//      return {
-//        type: 'put',
-//        key: id,
-//        value: merge(op.value || {}, { deleted: true })
-//      }
-//    } else {
-//      cb(new Error('unknown type'))
-//    }
-//  }
-}
+// Osm.prototype.batch = function (ops, cb) {
+//   if (!ops || !ops.length) return cb()
+// 
+//   var self = this
+//   cb = once(cb)
+// 
+//   // Populate way & relation deletions with correct refs/members.
+//   var pending = 0
+//   var error
+//   for (var i = 0; i < ops.length; i++) {
+//     if (ops[i].type === 'del') {
+//       pending++
+//       updateRefs(ops[i].id, ops[i].value, function (err) {
+//         if (err) error = err
+//         if (!--pending) write(error)
+//       })
+//     }
+//   }
+//   if (!pending) write()
+// 
+//   function write (err) {
+//     if (err) return cb(err)
+// 
+//     var batch = ops.map(osmOpToBatchOp)
+// 
+//     self.db.batch(batch, function (err, res) {
+//       if (err) return cb(err)
+//       res = res.map(function (node, n) {
+//         return merge(node.value, {
+//           id: hyperdbKeyToId(batch[n].key),
+//           version: utils.versionFromKeySeq(self.db._writers[node.feed].key, node.seq)
+//         })
+//       })
+//       cb(null, res)
+//     })
+//   }
+// 
+//   function updateRefs (id, elm, cb) {
+//     self._getRefsMembers(id, function (err, res) {
+//       if (err) return cb(err)
+//       if (res.refs) elm.refs = res.refs
+//       else if (res.members) elm.members = res.members
+//       cb()
+//     })
+//   }
+// 
+//   function hyperdbKeyToId (key) {
+//     return key.substring(key.lastIndexOf('/') + 1)
+//   }
+// 
+//   function osmOpToBatchOp (op) {
+//     var id = (op.id || utils.generateId())
+// 
+//     if (op.type === 'put') {
+//       return {
+//         type: 'put',
+//         key: id,
+//         value: op.value
+//       }
+//     } else if (op.type === 'del') {
+//       return {
+//         type: 'put',
+//         key: id,
+//         value: merge(op.value || {}, { deleted: true })
+//       }
+//     } else {
+//       cb(new Error('unknown type'))
+//     }
+//   }
+// }
 
 // Id -> { id, version }
 Osm.prototype.getChanges = function (id, cb) {
@@ -535,40 +574,44 @@ Osm.prototype.createReplicationStream = function (opts) {
 Osm.prototype.replicate = Osm.prototype.createReplicationStream
 
 // OsmId -> {refs: [OsmId]} | {members: [OsmId]} | {}
+Osm.prototype._mergeElementRefsAndMembers = function (elms) {
+  var res = {}
+  for (var i = 0; i < elms.length; i++) {
+    var elm = elms[i]
+    if (elm.refs) {
+      res.refs = res.refs || []
+      mergeRefs(res.refs, elm.refs)
+    } else if (elm.members) {
+      res.members = res.members || []
+      mergeMembers(res.members, elm.members)
+    }
+  }
+  return res
+
+  function mergeRefs (into, from) {
+    into.push.apply(into, from)
+    return uniq(into)
+  }
+
+  function mergeMembers (into, from) {
+    into.push.apply(into, from)
+    return uniq(into, memberCmp)
+  }
+
+  function memberCmp (a, b) {
+    return a.id === b.id ? 0 : -1
+  }
+}
+
+// OsmId -> {refs: [OsmId]} | {members: [OsmId]} | {}
 Osm.prototype._getRefsMembers = function (id, cb) {
-//  var res = {}
-//  var key = this.dbPrefix + '/elements/' + id
-//
-//  this.db.get(key, function (err, nodes) {
-//    if (err || !nodes || !nodes.length) return cb(err, {})
-//
-//    for (var i = 0; i < nodes.length; i++) {
-//      var elm = nodes[i].value
-//      if (elm.refs) {
-//        res.refs = res.refs || []
-//        mergeRefs(res.refs, elm.refs)
-//      } else if (elm.members) {
-//        res.members = res.members || []
-//        mergeMembers(res.members, elm.members)
-//      }
-//    }
-//
-//    cb(null, res)
-//  })
-//
-//  function mergeRefs (into, from) {
-//    into.push.apply(into, from)
-//    return uniq(into)
-//  }
-//
-//  function mergeMembers (into, from) {
-//    into.push.apply(into, from)
-//    return uniq(into, memberCmp)
-//  }
-//
-//  function memberCmp (a, b) {
-//    return a.id === b.id ? 0 : -1
-//  }
+  var res = {}
+
+  this.get(id, function (err, elms) {
+    if (err || !elms || !elms.length) return cb(err, {})
+    var res = self._mergeElementRefsAndMembers(elms)
+    cb(null, res)
+  })
 }
 
 var typeOrder = { node: 0, way: 1, relation: 2 }
