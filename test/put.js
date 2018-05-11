@@ -44,9 +44,11 @@ test('put with pre-set id', function (t) {
   db.put('foobar', node, function (err, elm) {
     t.error(err)
     t.notEquals('PLACEHOLDER', elm.id)
-    db.getByVersion(elm.version, function (err, elm) {
-      t.error(err)
-      t.notEquals('PLACEHOLDER', elm.id)
+    db.ready(function () {
+      db.get(elm.version, function (err, elm) {
+        t.error(err)
+        t.notEquals('PLACEHOLDER', elm.id)
+      })
     })
   })
 })
@@ -179,13 +181,11 @@ test('soft delete a node', function (t) {
     t.error(err)
     db.put(elm.id, nodeDeletion, function (err) {
       t.error(err)
-      db.get(elm.id, function (err, elms) {
+      db.get(elm.id, function (err, nodes) {
         t.error(err)
-        t.equals(elms.length, 1)
-        t.equals(elms[0].id, elm.id)
-        delete elms[0].id
-        delete elms[0].version
-        t.deepEquals(elms[0], nodeDeletion)
+        t.equals(nodes.length, 1)
+        t.equals(nodes[0].id, elm.id)
+        t.deepEquals(nodes[0].element, nodeDeletion)
       })
     })
   })

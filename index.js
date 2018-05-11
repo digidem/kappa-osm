@@ -60,54 +60,51 @@ Osm.prototype.ready = function (cb) {
 
 // OsmElement -> Error
 Osm.prototype.create = function (element, cb) {
-  var self = this
-
-  // Element format verification
-  var errs = checkElement(element, 'put')
-  if (errs.length) return cb(errs[0])
-
-  utils.populateElementDefaults(element)
-
   // Generate unique ID for element
   var id = utils.generateId()
 
-  // Write the element to the log
-  // TODO: how are 'links' passed in? opts.links?
-  var data = {
-    type: 'osm/element',
-    id: id,
-    element: element
-  }
-
-  console.log('creating', id, '->', element)
-
-  this._ready(function () {
-    self.writer.append(data, function (err) {
-      if (err) return cb(err)
-      var version = self.writer.key.toString('hex') + '@' + (self.writer.length-1)
-      cb(null, xtend(data, {version:version}))
-    })
-  })
+  this.put(id, element, cb)
 }
 
 // OsmId -> [OsmElement]
 Osm.prototype.get = function (id, cb) {
   var self = this
 
-  this.kv.get(id, function (err, versions) {
-    if (err) return cb(err)
-    versions = versions || []
+  var res = []
+  var error
+  var pending = 0
 
-    // TODO: async map to elements
+  this.kv.ready(function () {
+    self.kv.get(id, function (err, versions) {
+      if (err) return cb(err)
+      versions = versions || []
+      pending = versions.length + 1
 
-    cb(null, versions)
+      for (var i=0; i < versions.length; i++) {
+        self.getByVersion(versions[i], done)
+      }
+      done()
+    })
   })
+
+  function done (err, node) {
+    if (err) error = err
+    if (node) res.push(node)
+    if (--pending) return
+    if (error) cb(error)
+    else cb(null, res)
+  }
 }
 
-// OsmVersion -> OsmElement
-Osm.prototype.getByVersion = function (osmVersion, cb) {
-  // TODO: have umkv index version too
-  throw new Error('not implemented')
+Osm.prototype.getByVersion = function (version, cb) {
+  var key = version.split('@')[0]
+  var seq = version.split('@')[1]
+  var feed = this.log.feed(new Buffer(key, 'hex'))
+  if (feed) {
+    feed.get(seq, cb)
+  } else {
+    cb(null, null)
+  }
 }
 
 // OsmId, OsmElement -> OsmElement
@@ -131,13 +128,31 @@ Osm.prototype.put = function (id, element, opts, cb) {
     element: element
   }
 
-  console.log('updating', id, '->', element)
+  console.log('put', id, '->', element)
 
-  this.writer.append(data, function (err) {
-    if (err) return cb(err)
-    var version = self.writer.key.toString('hex') + '@' + (self.writer.length-1)
-    cb(null, version)
+  this.kv.ready(function () {
+    if (opts.links) {
+      data.links = opts.links
+      write()
+    } else {
+      self.kv.get(id, function (err, versions) {
+        if (err) return cb(err)
+        data.links = versions
+        write()
+      })
+    }
   })
+
+  function write () {
+    self._ready(function () {
+      self.writer.append(data, function (err) {
+        if (err) return cb(err)
+        var version = self.writer.key.toString('hex') + '@' + (self.writer.length-1)
+        var node = xtend(data, { version: version })
+        cb(null, node)
+      })
+    })
+  }
 }
 
 // OsmId, OsmElement -> OsmElement
