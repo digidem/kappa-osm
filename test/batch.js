@@ -81,7 +81,7 @@ test('create + update nodes', function (t) {
         t.ok(element.version)
         t.equals(element.lat, '75')
       })
-      // TODO: do a hyperdb#createHistoryStream to check for entries
+      // TODO: do a osm#createHistoryStream to check for entries
     })
   })
 })

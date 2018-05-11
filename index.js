@@ -246,76 +246,109 @@ Osm.prototype.del = function (id, element, opts, cb) {
 }
 
 // TODO: should element validation happen on batch jobs?
-// Osm.prototype.batch = function (ops, cb) {
-//   if (!ops || !ops.length) return cb()
-// 
-//   var self = this
-//   cb = once(cb)
-// 
-//   // Populate way & relation deletions with correct refs/members.
-//   var pending = 0
-//   var error
-//   for (var i = 0; i < ops.length; i++) {
-//     if (ops[i].type === 'del') {
-//       pending++
-//       updateRefs(ops[i].id, ops[i].value, function (err) {
-//         if (err) error = err
-//         if (!--pending) write(error)
-//       })
-//     }
-//   }
-//   if (!pending) write()
-// 
-//   function write (err) {
-//     if (err) return cb(err)
-// 
-//     var batch = ops.map(osmOpToBatchOp)
-// 
-//     self.db.batch(batch, function (err, res) {
-//       if (err) return cb(err)
-//       res = res.map(function (node, n) {
-//         return merge(node.value, {
-//           id: hyperdbKeyToId(batch[n].key),
-//           version: utils.versionFromKeySeq(self.db._writers[node.feed].key, node.seq)
-//         })
-//       })
-//       cb(null, res)
-//     })
-//   }
-// 
-//   function updateRefs (id, elm, cb) {
-//     self._getRefsMembers(id, function (err, res) {
-//       if (err) return cb(err)
-//       if (res.refs) elm.refs = res.refs
-//       else if (res.members) elm.members = res.members
-//       cb()
-//     })
-//   }
-// 
-//   function hyperdbKeyToId (key) {
-//     return key.substring(key.lastIndexOf('/') + 1)
-//   }
-// 
-//   function osmOpToBatchOp (op) {
-//     var id = (op.id || utils.generateId())
-// 
-//     if (op.type === 'put') {
-//       return {
-//         type: 'put',
-//         key: id,
-//         value: op.value
-//       }
-//     } else if (op.type === 'del') {
-//       return {
-//         type: 'put',
-//         key: id,
-//         value: merge(op.value || {}, { deleted: true })
-//       }
-//     } else {
-//       cb(new Error('unknown type'))
-//     }
-//   }
-// }
+Osm.prototype.batch = function (ops, cb) {
+  if (!ops || !ops.length) return cb()
+
+  var self = this
+  cb = once(cb)
+
+  populateWayRelationRefs(function (err) {
+    if (err) return cb(err)
+    populateMissingLinks(function (err) {
+      if (err) return cb(err)
+      writeData(cb)
+    })
+  })
+
+  // First, populate way & relation deletions with correct refs/members.
+  function populateWayRelationRefs (cb) {
+    var pending = 0
+    var error
+    for (var i = 0; i < ops.length; i++) {
+      if (ops[i].type === 'del') {
+        pending++
+        updateRefs(ops[i].id, ops[i].links, ops[i].value, function (err) {
+          if (err) error = err
+          if (!--pending) cb(error)
+        })
+      }
+    }
+    if (!pending) cb()
+  }
+
+  function populateMissingLinks (cb) {
+    var pending = 1
+    self.kv.ready(function () {
+      for (var i = 0; i < ops.length; i++) {
+        if (!ops[i].id) {
+          ops[i].id = utils.generateId()
+          ops[i].links = []
+        } else if (!ops[i].links) {
+          pending++
+          ;(function get (op) {
+            self.kv.get(op.id, function (err, versions) {
+              op.links = versions || []
+              if (!--pending) cb(err)
+            })
+          })(ops[i])
+        }
+      }
+      if (!--pending) cb()
+    })
+  }
+
+  function writeData (cb) {
+    var batch = ops.map(osmOpToMsg)
+
+    self._ready(function () {
+      var key = self.writer.key.toString('hex')
+      var startSeq = self.writer.length
+      self.writer.append(batch, function (err) {
+        if (err) return cb(err)
+        var res = batch.map(function (msg, n) {
+          var version = key + '@' + (startSeq + n)
+          return xtend(msg.element, {
+            id: msg.id,
+            version: version
+          })
+        })
+        cb(null, res)
+      })
+    })
+  }
+
+  function updateRefs (id, links, elm, cb) {
+    if (links) self._getRefsMembersByVersions(links, done)
+    else self._getRefsMembersById(id, done)
+
+    function done (err, res) {
+      if (err) return cb(err)
+      if (res.refs) elm.refs = res.refs
+      else if (res.members) elm.members = res.members
+      cb()
+    }
+  }
+
+  function osmOpToMsg (op) {
+    if (op.type === 'put') {
+      return {
+        type: 'osm/element',
+        id: op.id,
+        element: op.value,
+        links: op.links
+      }
+    } else if (op.type === 'del') {
+      return {
+        type: 'osm/element',
+        id: op.id,
+        element: xtend(op.value, { deleted: true }),
+        links: op.links
+      }
+    } else {
+      cb(new Error('unknown type'))
+    }
+  }
+}
 
 // Id -> { id, version }
 Osm.prototype.getChanges = function (id, cb) {
@@ -604,7 +637,8 @@ Osm.prototype._mergeElementRefsAndMembers = function (elms) {
 }
 
 // OsmId -> {refs: [OsmId]} | {members: [OsmId]} | {}
-Osm.prototype._getRefsMembers = function (id, cb) {
+Osm.prototype._getRefsMembersById = function (id, cb) {
+  var self = this
   var res = {}
 
   this.get(id, function (err, elms) {
@@ -612,6 +646,29 @@ Osm.prototype._getRefsMembers = function (id, cb) {
     var res = self._mergeElementRefsAndMembers(elms)
     cb(null, res)
   })
+}
+
+// [OsmVersion] -> {refs: [OsmId]} | {members: [OsmId]} | {}
+Osm.prototype._getRefsMembersByVersions = function (versions, cb) {
+  var res = {}
+
+  if (!versions.length) return cb(null, [])
+
+  var res = []
+  var error
+  var pending = versions.length
+  for (var i=0; i < versions.length; i++) {
+    self.getByVersion(versions[i], onElm)
+  }
+
+  function onElm (err, elm) {
+    if (err) error = err
+    if (--pending) return
+    if (error) return cb(error)
+
+    var res = self._mergeElementRefsAndMembers(elms)
+    cb(null, res)
+  }
 }
 
 var typeOrder = { node: 0, way: 1, relation: 2 }
