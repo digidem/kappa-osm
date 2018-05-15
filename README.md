@@ -15,18 +15,17 @@ you're building!
 ## Usage
 
 ```js
-var Osm = require('multifeed-osm')
-var multifeed = require('multifeed')
-var hypercore = require('hypercore')
+var kappa = require('kappa-core')
+var Osm = require('kappa-osm')
 var ram = require('random-access-memory')
 var memdb = require('memdb')
 var Geo = require('grid-point-store')
 
-var logs = multifeed(hypercore, ram, { valueEncoding: 'json' }))
+var core = kappa(ram, { valueEncoding: 'json' })
 var indexes = memdb()
 var geo = Geo(memdb())
 var osm = Osm({
-  logs: logs,
+  core: core,
   index: indexes,
   spatial: geo
 })
@@ -72,7 +71,7 @@ var Osm = require('multifeed-osm')
 
 Expected `opts` include:
 
-- `logs`: a [multifeed](https://github.com/noffle/multifeed) instance
+- `core`: a [kappa-core](https://github.com/noffle/kappa-core) instance
 - `index`: a [levelup](https://github.com/level/levelup) instance
 - `spatial`: a [grid-point-store](https://github.com/noffle/grid-point-store)
   instance
