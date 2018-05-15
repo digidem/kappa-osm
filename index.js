@@ -14,7 +14,7 @@ var merge = require('deepmerge')
 var checkElement = require('./lib/check-element')
 var validateBoundingBox = require('./lib/utils').validateBoundingBox
 //var createGeoIndex = require('./lib/geo-index')
-//var createRefsIndex = require('./lib/refs-index')
+var createRefsIndex = require('./lib/refs-index')
 var createKvIndex = require('./lib/kv-index')
 
 module.exports = Osm
@@ -41,6 +41,7 @@ function Osm (opts) {
 
   // Create indexes
   this.core.use('kv', createKvIndex(sub(this.index, 'kv'), this.spatial))
+  this.core.use('refs', createRefsIndex(sub(this.index, 'refs')))
 }
 
 // Is the log ready for writing?
@@ -138,8 +139,6 @@ Osm.prototype.put = function (id, element, opts, cb) {
     element: element
   }
 
-  console.log('put', msg)
-
   // set links
   if (opts.links) {
     msg.links = opts.links
@@ -154,6 +153,7 @@ Osm.prototype.put = function (id, element, opts, cb) {
 
   // write to the feed
   function write () {
+    console.log('put', msg)
     self._ready(function () {
       self.writer.append(msg, function (err) {
         if (err) return cb(err)
@@ -345,13 +345,18 @@ Osm.prototype.batch = function (ops, cb) {
 
 // Id -> { id, version }
 Osm.prototype.getChanges = function (id, cb) {
-  return this.refs.getReferersById(id, cb)
+  var self = this
+  this.core.api.refs.ready(function () {
+    self.core.api.refs.get(id, cb)
+  })
 }
 
 // Id -> { id, version }
 Osm.prototype.refs = function (id, cb) {
-  throw new Error('not implemented')
-  // return this.refs.getReferersById(id, cb)
+  var self = this
+  this.core.api.refs.ready(function () {
+    self.core.api.refs.get(id, cb)
+  })
 }
 
 // BoundingBox -> (Stream or Callback)

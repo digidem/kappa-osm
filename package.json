@@ -37,6 +37,7 @@
     "through2": "^2.0.3",
     "to-buffer": "^1.1.0",
     "uniq": "^1.0.1",
+    "unordered-materialized-backrefs": "^1.0.1",
     "unordered-materialized-kv": "^1.0.1",
     "varint": "^5.0.0",
     "xtend": "^4.0.1"

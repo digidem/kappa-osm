@@ -3,7 +3,7 @@ var createDb = require('./lib/create-db')
 var setup = require('./lib/setup')
 var collect = require('./lib/collect')
 
-test('getReferrers API', function (t) {
+test('refs API', function (t) {
   var db = createDb()
 
   var data = [
@@ -52,15 +52,15 @@ test('getReferrers API', function (t) {
   setup(db, data, function (err) {
     t.error(err)
 
-    db.getReferrers('B', function (err, refs) {
+    db.refs('B', function (err, refs) {
       t.error(err)
       var ids = refs.map(function (ref) { return ref.id }).sort()
       t.deepEquals(ids, ['D', 'E', 'F'])
-      db.getReferrers('C', function (err, refs) {
+      db.refs('C', function (err, refs) {
         t.error(err)
         var ids = refs.map(function (ref) { return ref.id }).sort()
         t.deepEquals(ids, ['D', 'F'])
-        collect(db.getReferrers('E'), function (err, refs) {
+        db.refs('E', function (err, refs) {
           t.error(err)
           var ids = refs.map(function (ref) { return ref.id }).sort()
           t.deepEquals(ids, ['F'])
@@ -106,7 +106,7 @@ test('return only latest referrers to a node: way', function (t) {
 
     db.put('D', way, function (err) {
       t.error(err)
-      db.getReferrers('A', function (err, refs) {
+      db.refs('A', function (err, refs) {
         t.error(err)
         t.equals(refs.length, 1)
         t.equals(refs[0].id, 'D')
@@ -147,7 +147,7 @@ test('return only latest referrers to a node: relation', function (t) {
 
     db.put('C', rel, function (err) {
       t.error(err)
-      db.getReferrers('B', function (err, refs) {
+      db.refs('B', function (err, refs) {
         t.error(err)
         t.equals(refs.length, 0)
         t.end()
