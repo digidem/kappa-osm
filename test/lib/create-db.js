@@ -1,5 +1,4 @@
-var multifeed = require('multifeed')
-var hypercore = require('hypercore')
+var kappa = require('kappa-core')
 var Osm = require('../..')
 var ram = require('random-access-memory')
 var Grid = require('grid-point-store')
@@ -9,9 +8,9 @@ module.exports = createOne
 module.exports.two = createTwo
 
 function createOne () {
-  var logs = multifeed(hypercore, ram, { valueEncoding: 'json' })
+  var core = kappa(ram, { valueEncoding: 'json' })
   return Osm({
-    logs: logs,
+    core: core,
     index: memdb(),
     spatial: Grid({ store: memdb(), zoomLevel: 10 })
   })

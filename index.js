@@ -1,5 +1,6 @@
 module.exports = Osm
 
+var kappa = require('kappa-core')
 var through = require('through2')
 var readonly = require('read-only-stream')
 var sub = require('subleveldown')
@@ -20,26 +21,26 @@ module.exports = Osm
 
 function Osm (opts) {
   if (!(this instanceof Osm)) return new Osm(opts)
-  if (!opts.logs) throw new Error('missing param "logs"')
+  if (!opts.core) throw new Error('missing param "core"')
   if (!opts.index) throw new Error('missing param "index"')
   if (!opts.spatial) throw new Error('missing param "spatial"')
 
   var self = this
 
-  this.logs = opts.logs
+  this.core = opts.core
   this.index = opts.index
   this.spatial = opts.spatial
 
   this.writer = null
   this.readyFns = []
-  this.logs.writer('default', function (err, writer) {
+  this.core.feed('default', function (err, writer) {
     self.writer = writer
     self.readyFns.forEach(function (fn) { fn() })
     self.readyFns = []
   })
 
   // Create indexes
-  this.kv = createKvIndex(this.logs, sub(this.index, 'kv'), this.spatial)
+  this.core.use('kv', createKvIndex(sub(this.index, 'kv'), this.spatial))
 }
 
 // Is the log ready for writing?
@@ -54,7 +55,7 @@ Osm.prototype.ready = function (cb) {
     this.readyFns.push(cb)
     return
   }
-  this.kv.ready(cb)
+  this.core.api.kv.ready(cb)
 }
 
 // OsmElement -> Error
@@ -73,17 +74,15 @@ Osm.prototype.get = function (id, cb) {
   var error
   var pending = 0
 
-  this.kv.ready(function () {
-    self.kv.get(id, function (err, versions) {
-      if (err) return cb(err)
-      versions = versions || []
-      pending = versions.length + 1
+  this.core.api.kv.get(id, function (err, versions) {
+    if (err) return cb(err)
+    versions = versions || []
+    pending = versions.length + 1
 
-      for (var i=0; i < versions.length; i++) {
-        self.getByVersion(versions[i], done)
-      }
-      done()
-    })
+    for (var i=0; i < versions.length; i++) {
+      self.getByVersion(versions[i], done)
+    }
+    done()
   })
 
   function done (err, elm) {
@@ -99,11 +98,11 @@ Osm.prototype.get = function (id, cb) {
 Osm.prototype._getByVersion = function (version, cb) {
   var key = version.split('@')[0]
   var seq = version.split('@')[1]
-  var feed = this.logs.feed(new Buffer(key, 'hex'))
+  var feed = this.core._logs.feed(key)
   if (feed) {
     feed.get(seq, cb)
   } else {
-    cb(null, null)
+    cb(err, null)
   }
 }
 
@@ -142,18 +141,16 @@ Osm.prototype.put = function (id, element, opts, cb) {
   console.log('put', msg)
 
   // set links
-  this.kv.ready(function () {
-    if (opts.links) {
-      msg.links = opts.links
+  if (opts.links) {
+    msg.links = opts.links
+    write()
+  } else {
+    self.core.api.kv.get(id, function (err, versions) {
+      if (err) return cb(err)
+      msg.links = versions
       write()
-    } else {
-      self.kv.get(id, function (err, versions) {
-        if (err) return cb(err)
-        msg.links = versions
-        write()
-      })
-    }
-  })
+    })
+  }
 
   // write to the feed
   function write () {
@@ -201,16 +198,14 @@ Osm.prototype.del = function (id, element, opts, cb) {
 
   // Get links
   function getLinks (cb) {
-    self.kv.ready(function () {
-      if (opts.links) {
-        cb(null, opts.links)
-      } else {
-        self.kv.get(id, function (err, versions) {
-          if (err) return cb(err)
-          cb(null, versions)
-        })
-      }
-    })
+    if (opts.links) {
+      cb(null, opts.links)
+    } else {
+      self.core.api.kv.get(id, function (err, versions) {
+        if (err) return cb(err)
+        cb(null, versions)
+      })
+    }
   }
 
   function getElms (links, cb) {
@@ -278,23 +273,21 @@ Osm.prototype.batch = function (ops, cb) {
 
   function populateMissingLinks (cb) {
     var pending = 1
-    self.kv.ready(function () {
-      for (var i = 0; i < ops.length; i++) {
-        if (!ops[i].id) {
-          ops[i].id = utils.generateId()
-          ops[i].links = []
-        } else if (!ops[i].links) {
-          pending++
-          ;(function get (op) {
-            self.kv.get(op.id, function (err, versions) {
-              op.links = versions || []
-              if (!--pending) cb(err)
-            })
-          })(ops[i])
-        }
+    for (var i = 0; i < ops.length; i++) {
+      if (!ops[i].id) {
+        ops[i].id = utils.generateId()
+        ops[i].links = []
+      } else if (!ops[i].links) {
+        pending++
+        ;(function get (op) {
+          self.core.api.kv.get(op.id, function (err, versions) {
+            op.links = versions || []
+            if (!--pending) cb(err)
+          })
+        })(ops[i])
       }
-      if (!--pending) cb()
-    })
+    }
+    if (!--pending) cb()
   }
 
   function writeData (cb) {
@@ -602,7 +595,7 @@ Osm.prototype.query = function (bbox, opts, cb) {
 }
 
 Osm.prototype.createReplicationStream = function (opts) {
-  return this.logs.replicate(opts)
+  return this.core.replicate(opts)
 }
 Osm.prototype.replicate = Osm.prototype.createReplicationStream
 
