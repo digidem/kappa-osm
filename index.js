@@ -56,7 +56,10 @@ Osm.prototype.ready = function (cb) {
     this.readyFns.push(cb)
     return
   }
-  this.core.api.kv.ready(cb)
+  var self = this
+  this.core.api.kv.ready(function () {
+    self.core.api.refs.ready(cb)
+  })
 }
 
 // OsmElement -> Error
