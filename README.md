@@ -1,6 +1,6 @@
-# multifeed-osm
+# kappa-osm
 
-> Peer-to-peer OpenStreetMap database over multifeed.
+> Peer-to-peer OpenStreetMap database over [kappa-core](https://github.com/noffle/kappa-core)
 
 ## Current Status
 
@@ -64,7 +64,7 @@ created node with id 78d06921416fe95b
 ## API
 
 ```js
-var Osm = require('multifeed-osm')
+var Osm = require('kappa-osm')
 ```
 
 ### var osm = Osm(opts)
@@ -192,7 +192,7 @@ Objects of the following form are returned:
 With [npm](https://npmjs.org/) installed, run
 
 ```
-$ npm install multifeed-osm
+$ npm install kappa-osm
 ```
 
 ## License
