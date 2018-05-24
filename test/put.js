@@ -211,10 +211,11 @@ test('version lookup correctness', function (t) {
         t.error(err)
         t.equals(elm1.id, elm3.id)
         t.equals(elm1.version, elm3.version)
-        db.getByVersion(elm2.version, function (err, elm4) {
+        db.getByVersion(elm2.version, { raw: true }, function (err, msg) {
+          var elm4 = msg.element
           t.error(err)
-          t.equals(elm2.id, elm4.id)
-          t.equals(elm2.version, elm4.version)
+          t.equals(msg.id, elm2.id)
+          t.deepEquals(msg.links, [elm1.version])
           t.deepEquals(elm4.tags, { foo: 'bar' })
           t.end()
         })

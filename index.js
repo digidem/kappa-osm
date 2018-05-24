@@ -111,9 +111,15 @@ Osm.prototype._getByVersion = function (version, cb) {
 }
 
 // OsmVersion -> [OsmElement]
-Osm.prototype.getByVersion = function (version, cb) {
+Osm.prototype.getByVersion = function (version, opts, cb) {
+  if (typeof opts === 'function' && !cb) {
+    cb = opts
+    opts = {}
+  }
+
   this._getByVersion(version, function (err, msg) {
     if (err) return cb(err)
+    if (opts.raw) return cb(null, msg)
     var elm = msg.element
     elm.id = msg.id
     elm.version = version

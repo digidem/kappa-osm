@@ -88,10 +88,28 @@ Fetch all of the newest OSM elements with the ID `id`. In the case that multiple
 peers modified an element prior to sync'ing with each other, there may be
 multiple latest elements ("heads") for the ID.
 
-### osm.getByVersion(version, cb)
+### osm.getByVersion(version[, opts], cb)
 
 Fetch a specific OSM element by its version string. Returns `null` if not found,
 otherwise the single element.
+
+If `opts.raw` is set, the underlying message is returned, which wraps the
+element. It looks like
+
+```js
+{
+  type: 'osm/element',
+  id: 123567,
+  element: {
+    type: 'node',
+    lat: 14,
+    lon: 12,
+    changeset: '145',
+    tags: {}
+  },
+  links: [ 'versionA', 'versionB', ]
+}
+```
 
 ### osm.put(id, element, cb)
 
