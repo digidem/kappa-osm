@@ -12,7 +12,7 @@ function createOne () {
   return Osm({
     core: core,
     index: memdb(),
-    spatial: Grid({ store: memdb(), zoomLevel: 10 })
+    storage: function (name, cb) { cb(null, ram()) }
   })
 }
 

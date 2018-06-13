@@ -176,6 +176,7 @@ test('batch: deleted way', function (t) {
     db.batch([op], function (err) {
       t.error(err)
       db.query([[-10, 10], [-10, 10]], function (err, res) {
+        console.log('res=',res)
         t.error(err)
         t.equals(res.length, 1)
         t.equals(res[0].id, 'D')

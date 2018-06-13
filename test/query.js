@@ -59,7 +59,7 @@ test('query empty dataset', function (t) {
   })
 })
 
-test('query random dataset', function (t) {
+test.only('query random dataset', function (t) {
   t.plan(7)
 
   var db = createDb()

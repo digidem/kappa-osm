@@ -11,11 +11,12 @@ var xtend = require('xtend')
 var uniq = require('uniq')
 var merge = require('deepmerge')
 
+var umkv = require('unordered-materialized-kv')
 var checkElement = require('./lib/check-element')
-var validateBoundingBox = require('./lib/utils').validateBoundingBox
-//var createGeoIndex = require('./lib/geo-index')
-var createRefsIndex = require('./lib/refs-index')
-var createKvIndex = require('./lib/kv-index')
+var validateBoundingBox = require('./lib/utils.js').validateBoundingBox
+var createRefsIndex = require('./lib/refs-index.js')
+var createKvIndex = require('./lib/kv-index.js')
+var createBkdIndex = require('./lib/bkd-index.js')
 
 module.exports = Osm
 
@@ -23,13 +24,12 @@ function Osm (opts) {
   if (!(this instanceof Osm)) return new Osm(opts)
   if (!opts.core) throw new Error('missing param "core"')
   if (!opts.index) throw new Error('missing param "index"')
-  if (!opts.spatial) throw new Error('missing param "spatial"')
+  if (!opts.storage) throw new Error('missing param "storage"')
 
   var self = this
 
   this.core = opts.core
   this.index = opts.index
-  this.spatial = opts.spatial
 
   this.writer = null
   this.readyFns = []
@@ -40,8 +40,13 @@ function Osm (opts) {
   })
 
   // Create indexes
-  this.core.use('kv', createKvIndex(sub(this.index, 'kv'), this.spatial))
+  var kvdb = sub(this.index, 'kv')
+  var kv = umkv(kvdb)
+  this.core.use('kv', createKvIndex(kv, kvdb))
   this.core.use('refs', createRefsIndex(sub(this.index, 'refs')))
+  this.core.use('geo', createBkdIndex(
+    this.core, sub(this.index, 'bkd'), kv, opts.storage
+  ))
 }
 
 // Is the log ready for writing?
@@ -162,7 +167,6 @@ Osm.prototype.put = function (id, element, opts, cb) {
 
   // write to the feed
   function write () {
-    console.log('put', msg)
     self._ready(function () {
       self.writer.append(msg, function (err) {
         if (err) return cb(err)
@@ -237,7 +241,6 @@ Osm.prototype.del = function (id, element, opts, cb) {
 
   // write to the feed
   function write (msg, cb) {
-    console.log('del', msg)
     self._ready(function () {
       self.writer.append(msg, function (err) {
         if (err) return cb(err)
@@ -375,8 +378,7 @@ Osm.prototype.query = function (bbox, opts, cb) {
     opts = {}
   }
   opts = opts || {}
-
-  throw new Error('not implemented')
+  this.core.api.geo.query(bbox, opts, cb)
 
 //  // To prevent re-processing elements that were already processed.
 //  var seen = [{}, {}]
