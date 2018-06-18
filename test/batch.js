@@ -177,9 +177,8 @@ test('batch: deleted way', function (t) {
       t.error(err)
       db.query([[-10, 10], [-10, 10]], function (err, res) {
         t.error(err)
-        t.equals(res.length, 1)
-        t.equals(res[0].id, 'D')
-        t.equals(res[0].deleted, true)
+        var ids = res.map(e => e.id).sort()
+        t.deepEquals(ids, ['A', 'B', 'C'])
         t.end()
       })
     })
@@ -220,7 +219,7 @@ test('batch: deleted relation', function (t) {
       db.query([[-10, 10], [-10, 10]], function (err, res) {
         t.error(err)
         res.sort(cmpId)
-        var ids = res.map(e => e.id)
+        var ids = res.map(e => e.id).sort()
         t.deepEquals(ids, ['A', 'B', 'C', 'D'])
         t.end()
       })
