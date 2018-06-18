@@ -379,7 +379,7 @@ Osm.prototype.query = function (bbox, opts, cb) {
     opts = {}
   }
   opts = opts || {}
-  this.core.api.geo.query(bbox, opts, cb)
+  return this.core.api.geo.query(bbox, opts, cb)
 }
 
 Osm.prototype.createReplicationStream = function (opts) {
