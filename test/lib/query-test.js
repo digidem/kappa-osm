@@ -6,8 +6,8 @@ module.exports = function (t, db, data, expected, cb) {
 
   setup(db, data, function (err) {
     t.error(err)
-
-    ;(function next () {
+    db.ready(next)
+    function next () {
       var q = expected.shift()
       if (!q) return cb()
       var pending = 2
@@ -25,6 +25,6 @@ module.exports = function (t, db, data, expected, cb) {
         t.deepEquals(ids, q.expected.sort(), 'ids match cb query')
         if (!--pending) next()
       })
-    })()
+    }
   })
 }

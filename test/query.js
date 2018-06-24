@@ -3,7 +3,7 @@ var createDb = require('./lib/create-db')
 var queryTest = require('./lib/query-test')
 var collect = require('./lib/collect')
 
-test('no bbox', function (t) {
+test.only('no bbox', function (t) {
   t.plan(4)
 
   var db = createDb()
@@ -59,7 +59,7 @@ test('query empty dataset', function (t) {
   })
 })
 
-test.only('query random dataset', function (t) {
+test('query random dataset', function (t) {
   t.plan(7)
 
   var db = createDb()
@@ -90,7 +90,7 @@ test.only('query random dataset', function (t) {
         t.ok(Array.isArray(elements))
         t.equals(elements.length, 100)
       })
-      collect(db.query(bbox), { encoding: 'object' }, function (err, elements) {
+      collect(db.query(bbox), function (err, elements) {
         t.error(err)
         t.ok(Array.isArray(elements))
         t.equals(elements.length, 100)
@@ -121,11 +121,11 @@ test('relations on bbox nodes', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10,-10,+10,+10],
       expected: [ 'A', 'B', 'C' ]
     },
     {
-      bbox: [[-10, 0], [-10, 0]],
+      bbox: [-10,-10,+0,+0],
       expected: [ 'A', 'C' ]
     }
   ]
@@ -158,15 +158,15 @@ test('ways', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10,-10,+10,+10],
       expected: [ 'A', 'B', 'C', 'D' ]
     },
     {
-      bbox: [[-10, 0], [-10, 0]],
+      bbox: [-10,-10,+0,+0],
       expected: [ 'A', 'B', 'C', 'D' ]
     },
     {
-      bbox: [[-10, -10], [-10, -10]],
+      bbox: [-10,-10,-10,-10],
       expected: []
     }
   ]
@@ -210,15 +210,15 @@ test('relations on ways and nodes', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10,-10,+10,+10],
       expected: [ 'A', 'B', 'C', 'D', 'E' ]
     },
     {
-      bbox: [[-10, 0], [-10, 0]],
+      bbox: [-10,-10,+0,+0],
       expected: [ 'A', 'B', 'C', 'D', 'E' ]
     },
     {
-      bbox: [[-10, -10], [-10, -10]],
+      bbox: [-10,-10,-10,-10],
       expected: []
     }
   ]
