@@ -1,5 +1,1 @@
-var pull = require('pull-stream')
-
-module.exports = function (stream, cb) {
-  pull(stream, pull.collect(cb))
-}
+module.exports = require('collect-stream')

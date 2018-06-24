@@ -64,7 +64,7 @@ test.only('query random dataset', function (t) {
 
   var db = createDb()
 
-  var bbox = [[-10, 10], [-10, 10]]
+  var bbox = [-10,-10,+10,+10]
 
   // Generate a batch of random nodes
   var batch = (new Array(100))
@@ -84,17 +84,17 @@ test.only('query random dataset', function (t) {
     })
   db.batch(batch, function (err) {
     t.error(err)
-
-    db.query(bbox, function (err, elements) {
-      t.error(err)
-      t.ok(Array.isArray(elements))
-      t.equals(elements.length, 100)
-    })
-
-    collect(db.query(bbox), function (err, elements) {
-      t.error(err)
-      t.ok(Array.isArray(elements))
-      t.equals(elements.length, 100)
+    db.ready(function () {
+      db.query(bbox, function (err, elements) {
+        t.error(err)
+        t.ok(Array.isArray(elements))
+        t.equals(elements.length, 100)
+      })
+      collect(db.query(bbox), { encoding: 'object' }, function (err, elements) {
+        t.error(err)
+        t.ok(Array.isArray(elements))
+        t.equals(elements.length, 100)
+      })
     })
   })
 })
