@@ -3,7 +3,7 @@ var createDb = require('./lib/create-db')
 var queryTest = require('./lib/query-test')
 var collect = require('./lib/collect')
 
-test.only('no bbox', function (t) {
+test('no bbox', function (t) {
   t.plan(4)
 
   var db = createDb()
@@ -26,7 +26,7 @@ test('bad bbox', function (t) {
 
   var db = createDb()
 
-  var bbox = [[5, -5], [-5, 5]]
+  var bbox = [5,-5,-5,5]
 
   db.query(bbox, function (err, elements) {
     t.ok(err instanceof Error)
@@ -44,7 +44,7 @@ test('query empty dataset', function (t) {
 
   var db = createDb()
 
-  var bbox = [[-5, 5], [-5, 5]]
+  var bbox = [-5,-5,+5,+5]
 
   db.query(bbox, function (err, elements) {
     t.error(err)
@@ -176,7 +176,7 @@ test('ways', function (t) {
   })
 })
 
-test('relations on ways and nodes', function (t) {
+test.only('relations on ways and nodes', function (t) {
   var db = createDb()
 
   var data = [
