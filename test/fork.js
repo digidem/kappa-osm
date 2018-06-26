@@ -36,7 +36,7 @@ test('2-peer node fork', function (t) {
     })
 
     function check () {
-      var q0 = [[63, 65], [-148, -146]]
+      var q0 = [-148,63,-146,65]
       var ex0 = [
         { type: 'node',
           lat: '64.5',
@@ -76,7 +76,7 @@ test('2-peer node fork', function (t) {
         t.ifError(err)
         t.deepEqual(res.sort(idcmp), ex0, 'updated query 0')
       })
-      var q1 = [[62, 64], [-149.5, -146]]
+      var q1 = [-149.5,62,-146,64]
       var ex1 = [
         { type: 'node',
           lat: '64.5',

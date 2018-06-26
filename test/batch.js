@@ -175,7 +175,7 @@ test('batch: deleted way', function (t) {
     var op = {type: 'del', id: 'D', value: { changeset: '4' }}
     db.batch([op], function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10,-10,+10,+10], function (err, res) {
         t.error(err)
         var ids = res.map(e => e.id).sort()
         t.deepEquals(ids, ['A', 'B', 'C'])
@@ -216,7 +216,7 @@ test('batch: deleted relation', function (t) {
     var op = {type: 'del', id: 'E', value: { changeset: '4' }}
     db.batch([op], function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10,-10,+10,+10], function (err, res) {
         t.error(err)
         res.sort(cmpId)
         var ids = res.map(e => e.id).sort()

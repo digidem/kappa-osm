@@ -176,7 +176,7 @@ test('ways', function (t) {
   })
 })
 
-test.only('relations on ways and nodes', function (t) {
+test('relations on ways and nodes', function (t) {
   var db = createDb()
 
   var data = [
@@ -267,15 +267,15 @@ test('relation + super-relation on out-of-bbox node of a way', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10,-10,+10,+10],
       expected: [ 'A', 'B', 'C', 'D', 'E', 'F' ]
     },
     {
-      bbox: [[-10, 0], [-10, 0]],
+      bbox: [-10,-10,+0,+0],
       expected: [ 'A', 'B', 'C', 'D', 'E', 'F' ]
     },
     {
-      bbox: [[-10, -10], [-10, -10]],
+      bbox: [-10,-10,-10,-10],
       expected: []
     }
   ]
@@ -314,7 +314,7 @@ test('opts.type: results sorted by type', function (t) {
     }
   ]
 
-  var bbox = [[-10, 0], [-10, 0]]
+  var bbox = [-10,-10,+0,+0]
 
   var batch = data.map(function (elm) {
     var id = elm.id
@@ -375,7 +375,7 @@ test('return only latest version of a modified node', function (t) {
 
     db.put('A', node, function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10,-10,+10,+10], function (err, res) {
         t.error(err)
         t.equals(res.length, 1)
         t.equals(res[0].id, 'A')
@@ -412,7 +412,7 @@ test('return only latest way that references a node', function (t) {
   ]
 
   var queries = [ {
-    bbox: [[-10, 10], [-10, 10]],
+    bbox: [-10,-10,+10,+10],
     expected: [ 'A', 'B', 'C', 'D' ]
   } ]
 
@@ -454,7 +454,7 @@ test('deleted lone node', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10,-10,+10,+10],
       expected: [ 'A', 'B' ]
     }
   ]
@@ -462,7 +462,7 @@ test('deleted lone node', function (t) {
   queryTest(t, db, data, queries, function () {
     db.del('A', { changeset: '4' }, function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10,-10,+10,+10], function (err, res) {
         t.error(err)
         t.equals(res.length, 2)
         res.sort(cmpId)
@@ -498,7 +498,7 @@ test('deleted node of a way', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10,-10,+10,+10],
       expected: [ 'A', 'B', 'C', 'D' ]
     }
   ]
@@ -506,7 +506,7 @@ test('deleted node of a way', function (t) {
   queryTest(t, db, data, queries, function () {
     db.del('B', { changeset: '4' }, function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10,-10,+10,+10], function (err, res) {
         t.error(err)
         t.equals(res.length, 4)
         res.sort(cmpId)
@@ -561,7 +561,7 @@ test('update a node', function (t) {
     t.error(err)
     db.put('A', newNode, function (err) {
       t.error(err)
-      db.query([[-10, 11], [-10, 11]], function (err, res) {
+      db.query([-10,-10,+11,+11], function (err, res) {
         t.error(err)
         t.equals(res.length, 4)
         res.sort(cmpId)
@@ -618,7 +618,7 @@ test('update a way\'s refs', function (t) {
     t.error(err)
     db.put('E', newWay, function (err) {
       t.error(err)
-      db.query([[-10, 3], [-10, 3]], function (err, res) {
+      db.query([-10,-10,+3,+3], function (err, res) {
         t.error(err)
         t.equals(res.length, 4)
         res.sort(cmpId)
@@ -653,7 +653,7 @@ test('deleted way', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10,-10,+10,+10],
       expected: [ 'A', 'B', 'C', 'D' ]
     }
   ]
@@ -661,7 +661,7 @@ test('deleted way', function (t) {
   queryTest(t, db, data, queries, function () {
     db.del('D', { changeset: '4' }, function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10,-10,+10,+10], function (err, res) {
         t.error(err)
         t.equals(res.length, 1)
         t.equals(res[0].id, 'D')
@@ -701,7 +701,7 @@ test('deleted relation', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10,-10,+10,+10],
       expected: [ 'A', 'B', 'C', 'D', 'E' ]
     }
   ]
@@ -709,7 +709,7 @@ test('deleted relation', function (t) {
   queryTest(t, db, data, queries, function () {
     db.del('E', { changeset: '4' }, function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10,-10,+10,+10], function (err, res) {
         t.error(err)
         res.sort(cmpId)
         var ids = res.map(e => e.id)
