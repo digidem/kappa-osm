@@ -354,7 +354,7 @@ test('opts.type: results sorted by type', function (t) {
   })
 })
 
-test('return only latest version of a modified node', function (t) {
+test.only('return only latest version of a modified node', function (t) {
   var db = createDb()
 
   var node = {
