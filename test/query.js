@@ -464,11 +464,8 @@ test('deleted lone node', function (t) {
       t.error(err)
       db.query([-10,-10,+10,+10], function (err, res) {
         t.error(err)
-        t.equals(res.length, 2)
-        res.sort(cmpId)
-        t.equals(res[0].id, 'A')
-        t.equals(res[0].deleted, true)
-        t.equals(res[1].id, 'B')
+        t.equals(res.length, 1)
+        t.equals(res[0].id, 'B')
         t.end()
       })
     })
@@ -508,12 +505,56 @@ test('deleted node of a way', function (t) {
       t.error(err)
       db.query([-10,-10,+10,+10], function (err, res) {
         t.error(err)
-        t.equals(res.length, 4)
         res.sort(cmpId)
         var ids = res.map(e => e.id)
         t.deepEquals(ids, ['A', 'B', 'C', 'D'])
-        t.equals(res[1].deleted, true)
+        t.equals(res[1].element.deleted, true)
         t.end()
+      })
+    })
+  })
+})
+
+test('deleted node and a way', function (t) {
+  var db = createDb()
+
+  var data = [
+    { type: 'node',
+      id: 'A',
+      lat: '0',
+      lon: '0' },
+    { type: 'node',
+      id: 'B',
+      lat: '1',
+      lon: '1' },
+    { type: 'node',
+      id: 'C',
+      lat: '2',
+      lon: '2' },
+    { type: 'way',
+      id: 'D',
+      refs: ['A', 'B', 'C'] }
+  ]
+
+  var queries = [
+    {
+      bbox: [-10,-10,+10,+10],
+      expected: [ 'A', 'B', 'C', 'D' ]
+    }
+  ]
+
+  queryTest(t, db, data, queries, function () {
+    db.del('B', { changeset: '4' }, function (err) {
+      t.error(err)
+      db.del('D', { changeset: '4' }, function (err) {
+        t.error(err)
+        db.query([-10,-10,+10,+10], function (err, res) {
+          t.error(err)
+          res.sort(cmpId)
+          var ids = res.map(e => e.id)
+          t.deepEquals(ids, ['A', 'C' ])
+          t.end()
+        })
       })
     })
   })
@@ -663,9 +704,8 @@ test('deleted way', function (t) {
       t.error(err)
       db.query([-10,-10,+10,+10], function (err, res) {
         t.error(err)
-        t.equals(res.length, 1)
-        t.equals(res[0].id, 'D')
-        t.equals(res[0].deleted, true)
+        var ids = res.map(function (r) { return r.id })
+        t.deepEqual(ids.sort(), [ 'A', 'B', 'C' ])
         t.end()
       })
     })
@@ -713,8 +753,7 @@ test('deleted relation', function (t) {
         t.error(err)
         res.sort(cmpId)
         var ids = res.map(e => e.id)
-        t.deepEquals(ids, ['A', 'B', 'C', 'D', 'E'])
-        t.equals(res[4].deleted, true)
+        t.deepEquals(ids, ['A', 'B', 'C', 'D'])
         t.end()
       })
     })
