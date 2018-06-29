@@ -43,44 +43,7 @@ function Osm (opts) {
   var kvdb = sub(this.index, 'kv')
   this._pending = 0
   this._onready = []
-  var kv = umkv(kvdb, {
-    onremove: function (ids) {
-      self._pending++
-      var pending = 1
-      var ops = []
-      ids.forEach(function (id) {
-        pending++
-        self._pending++
-        var parts = id.split('@')
-        var key = parts[0]
-        var seq = Number(parts[1])
-        var feed = self.core._logs.feed(parts[0])
-        feed.ready(function () {
-          feed.get(seq, { wait: false }, function (err, doc) {
-            var version = Buffer.alloc(36)
-            version.write(key,0,'hex')
-            version.writeUInt32BE(seq,32)
-            ops.push({
-              type: 'delete',
-              point: [Number(doc.element.lon),Number(doc.element.lat)],
-              id: version
-            })
-            if (--self._pending === 0) checkReady()
-            if (--pending === 0) done()
-          })
-        })
-      })
-      if (--pending === 0) done()
-      function checkReady () {
-        self._onready.forEach(function (f) { f() })
-      }
-      function done () {
-        bkd._bkd.batch(ops, function (err) {
-          if (--self._pending === 0) checkReady()
-        })
-      }
-    }
-  })
+  var kv = umkv(kvdb)
   var bkd = createBkdIndex(
     this.core, sub(this.index, 'bkd'), kv, opts.storage
   )
