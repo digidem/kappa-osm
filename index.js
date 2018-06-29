@@ -41,12 +41,52 @@ function Osm (opts) {
 
   // Create indexes
   var kvdb = sub(this.index, 'kv')
-  var kv = umkv(kvdb)
+  this._pending = 0
+  this._onready = []
+  var kv = umkv(kvdb, {
+    onremove: function (ids) {
+      self._pending++
+      var pending = 1
+      var ops = []
+      ids.forEach(function (id) {
+        pending++
+        self._pending++
+        var parts = id.split('@')
+        var key = parts[0]
+        var seq = Number(parts[1])
+        var feed = self.core._logs.feed(parts[0])
+        feed.ready(function () {
+          feed.get(seq, { wait: false }, function (err, doc) {
+            var version = Buffer.alloc(36)
+            version.write(key,0,'hex')
+            version.writeUInt32BE(seq,32)
+            ops.push({
+              type: 'delete',
+              point: [Number(doc.element.lon),Number(doc.element.lat)],
+              id: version
+            })
+            if (--self._pending === 0) checkReady()
+            if (--pending === 0) done()
+          })
+        })
+      })
+      if (--pending === 0) done()
+      function checkReady () {
+        self._onready.forEach(function (f) { f() })
+      }
+      function done () {
+        bkd._bkd.batch(ops, function (err) {
+          if (--self._pending === 0) checkReady()
+        })
+      }
+    }
+  })
+  var bkd = createBkdIndex(
+    this.core, sub(this.index, 'bkd'), kv, opts.storage
+  )
   this.core.use('kv', createKvIndex(kv, kvdb))
   this.core.use('refs', createRefsIndex(sub(this.index, 'refs')))
-  this.core.use('geo', createBkdIndex(
-    this.core, sub(this.index, 'bkd'), kv, opts.storage
-  ))
+  this.core.use('geo', bkd)
 }
 
 // Is the log ready for writing?
@@ -56,16 +96,24 @@ Osm.prototype._ready = function (cb) {
 }
 
 Osm.prototype.ready = function (cb) {
+  var self = this
   // TODO: one day we'll have a readonly mode!
   if (!this.writer) {
     this.readyFns.push(cb)
     return
   }
-  var pending = 3
+  this._pending += 3
   this.core.api.kv.ready(onready)
   this.core.api.refs.ready(onready)
   this.core.api.geo.ready(onready)
-  function onready () { if (--pending === 0) cb() }
+  this._onready.push(onready)
+  function onready () {
+    if (--self._pending === 0) {
+      var ix = self._onready.indexOf(onready)
+      if (ix >= 0) self._onready.splice(ix,1)
+      cb()
+    }
+  }
 }
 
 // OsmElement -> Error
