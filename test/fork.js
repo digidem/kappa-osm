@@ -2,7 +2,7 @@ var test = require('tape')
 var createDb = require('./lib/create-db')
 var setup = require('./lib/setup')
 
-test('2-peer node fork', function (t) {
+test.only('2-peer node fork', function (t) {
   t.plan(11)
 
   var elms = [
@@ -14,6 +14,8 @@ test('2-peer node fork', function (t) {
 
   createDb.two(function (osm0, osm1) {
     var versions = {}
+    osm0.core._name = 'osm0'
+    osm1.core._name = 'osm1'
 
     setup(osm0, elms, function (err, elms) {
       t.error(err)
@@ -38,84 +40,150 @@ test('2-peer node fork', function (t) {
     function check () {
       var q0 = [-148,63,-146,65]
       var ex0 = [
-        { type: 'node',
-          lat: '64.5',
-          lon: '-147.3',
+        {
+          type: 'osm/element',
           id: 'A',
-          changeset: '15',
-          version: versions.A[0] },
-        { type: 'node',
-          lat: '63.9',
-          lon: '-147.6',
+          links: [],
+          element: {
+            type: 'node',
+            lat: '64.5',
+            lon: '-147.3',
+            changeset: '15'
+          },
+          version: versions.A[0]
+        },
+        {
+          type: 'osm/element',
           id: 'B',
-          changeset: '15',
-          version: versions.B[0] },
-        { type: 'node',
-          lat: '62.5',
-          lon: '-146.2',
+          links: [],
+          element: {
+            type: 'node',
+            lat: '63.9',
+            lon: '-147.6',
+            changeset: '15'
+          },
+          version: versions.B[0]
+        },
+        {
+          type: 'osm/element',
           id: 'C',
-          changeset: '14',
-          version: versions.C[1] },
-        { type: 'node',
-          lat: '62.4',
-          lon: '-146.3',
+          links: [versions.C[0]],
+          element: {
+            type: 'node',
+            lat: '62.5',
+            lon: '-146.2',
+            changeset: '14'
+          },
+          version: versions.C[1]
+        },
+        {
+          type: 'osm/element',
           id: 'C',
-          changeset: '16',
-          version: versions.C[2] },
-        { type: 'way',
-          refs: [ 'A', 'B', 'C' ],
+          links: [versions.C[0]],
+          element: {
+            type: 'node',
+            lat: '62.4',
+            lon: '-146.3',
+            changeset: '16',
+          },
+          version: versions.C[2]
+        },
+        {
+          type: 'osm/element',
           id: 'D',
-          changeset: '15',
-          version: versions.D[0] }
+          links: [],
+          element: {
+            type: 'way',
+            refs: [ 'A', 'B', 'C' ],
+            changeset: '15'
+          },
+          version: versions.D[0]
+        }
       ].sort(idcmp)
       osm0.query(q0, function (err, res) {
+        console.log('RES=',res.sort(idcmp))
         t.ifError(err)
-        t.deepEqual(res.sort(idcmp), ex0, 'updated query 0')
+        t.deepEqual(res.sort(idcmp), ex0, 'updated query 0 (osm0)')
       })
+      /*
       osm1.query(q0, function (err, res) {
+        console.log('RES=',res.sort(idcmp))
         t.ifError(err)
-        t.deepEqual(res.sort(idcmp), ex0, 'updated query 0')
+        t.deepEqual(res.sort(idcmp), ex0, 'updated query 0 (osm1)')
       })
+      */
       var q1 = [-149.5,62,-146,64]
       var ex1 = [
-        { type: 'node',
-          lat: '64.5',
-          lon: '-147.3',
+        {
+          type: 'osm/element',
           id: 'A',
-          changeset: '15',
-          version: versions.A[0] },
-        { type: 'node',
-          lat: '63.9',
-          lon: '-147.6',
+          links: [],
+          element: {
+            type: 'node',
+            lat: '64.5',
+            lon: '-147.3',
+            changeset: '15'
+          },
+          version: versions.A[0]
+        },
+        {
+          type: 'osm/element',
           id: 'B',
-          changeset: '15',
-          version: versions.B[0] },
-        { type: 'node',
-          lat: '62.5',
-          lon: '-146.2',
-          changeset: '14',
+          links: [],
+          element: {
+            type: 'node',
+            lat: '63.9',
+            lon: '-147.6',
+            changeset: '15'
+          },
+          version: versions.B[0]
+        },
+        {
+          type: 'osm/element',
           id: 'C',
-          version: versions.C[1] },
-        { type: 'node',
-          lat: '62.4',
-          lon: '-146.3',
-          changeset: '16',
+          links: [versions.C[0]],
+          element: {
+            type: 'node',
+            lat: '62.5',
+            lon: '-146.2',
+            changeset: '14'
+          },
+          version: versions.C[1]
+        },
+        {
+          type: 'osm/element',
           id: 'C',
-          version: versions.C[2] },
-        { type: 'way',
-          refs: [ 'A', 'B', 'C' ],
+          links: [versions.C[0]],
+          element: {
+            type: 'node',
+            lat: '62.4',
+            lon: '-146.3',
+            changeset: '16'
+          },
+          version: versions.C[2]
+        },
+        {
+          type: 'osm/element',
           id: 'D',
-          changeset: '15',
-          version: versions.D[0] }
+          links: [],
+          element: {
+            type: 'way',
+            refs: [ 'A', 'B', 'C' ],
+            changeset: '15'
+          },
+          version: versions.D[0]
+        }
       ].sort(idcmp)
+      /*
       osm0.query(q1, function (err, res) {
         t.ifError(err)
-        t.deepEqual(res.sort(idcmp), ex1, 'updated query 1')
+        t.deepEqual(res.sort(idcmp), ex1, 'updated query 1 (osm0)')
       })
       osm1.query(q1, function (err, res) {
         t.ifError(err)
-        t.deepEqual(res.sort(idcmp), ex1, 'updated query 1')
+        t.deepEqual(res.sort(idcmp), ex1, 'updated query 1 (osm1)')
       })
+      */
     }
   })
 })
@@ -210,5 +278,14 @@ function replicate (osm0, osm1, cb) {
   var r0 = osm0.replicate()
   var r1 = osm1.replicate()
   r0.pipe(r1).pipe(r0)
-  r0.once('end', cb)
+  var pending = 2
+  r0.once('end', onend)
+  r1.once('end', onend)
+  function onend () {
+    if (--pending !== 0) return
+    var p = 2
+    osm0.ready(onready)
+    osm1.ready(onready)
+    function onready () { if (--p === 0) cb() }
+  }
 }
