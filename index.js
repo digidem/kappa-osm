@@ -40,14 +40,13 @@ function Osm (opts) {
   })
 
   // Create indexes
-  var kvdb = sub(this.index, 'kv')
   this._pending = 0
   this._onready = []
-  var kv = umkv(kvdb)
+  var kv = umkv(sub(this.index,'kvu'))
   var bkd = createBkdIndex(
-    this.core, sub(this.index, 'bkd'), kv, opts.storage
+    this.core, sub(this.index,'bkd'), kv, opts.storage
   )
-  this.core.use('kv', createKvIndex(kv, kvdb))
+  this.core.use('kv', createKvIndex(kv, sub(this.index, 'kvi')))
   this.core.use('refs', createRefsIndex(sub(this.index, 'refs')))
   this.core.use('geo', bkd)
 }
