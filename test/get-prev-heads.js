@@ -2,7 +2,7 @@ var test = require('tape')
 var createDb = require('./lib/create-db')
 var setup = require('./lib/setup')
 
-test('node with one previous head', function (t) {
+test.skip('node with one previous head', function (t) {
   var node = {
     type: 'node',
     lat: '64.5',
@@ -30,7 +30,7 @@ test('node with one previous head', function (t) {
 //       /-- C1 <--\
 // C <---           --- C3
 //       \-- C2 <--/
-test('node with two previous heads', function (t) {
+test.skip('node with two previous heads', function (t) {
   var elms = [
     { type: 'node', id: 'A', lat: '64.5', lon: '-147.3', changeset: '15' },
     { type: 'node', id: 'B', lat: '63.9', lon: '-147.6', changeset: '15' },
