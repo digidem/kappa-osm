@@ -2,7 +2,7 @@ var test = require('tape')
 var createDb = require('./lib/create-db')
 var setup = require('./lib/setup')
 
-test.only('2-peer node fork', function (t) {
+test('2-peer node fork', function (t) {
   t.plan(15)
 
   var elms = [
@@ -190,7 +190,7 @@ test.only('2-peer node fork', function (t) {
 // A <---           --- (deletion)
 //       \-- A2 <--/
 test('2-peer deletion of forked nodes', function (t) {
-  t.plan(8)
+  t.plan(10)
 
   var elms = [
     { type: 'node', id: 'A', lat: '64.5', lon: '-147.3', changeset: '15' },
@@ -229,37 +229,64 @@ test('2-peer deletion of forked nodes', function (t) {
     })
 
     function check () {
-      var q0 = [[63, 65], [-148, -146]]
+      var q0 = [-148,63,-146,65]
       var ex0 = [
-        { type: 'node',
-          lat: '64.5',
-          lon: '-147.3',
+        {
+          type: 'osm/element',
           id: 'A',
-          changeset: '15',
-          version: versions.A[0] },
-        { type: 'node',
-          lat: '63.9',
-          lon: '-147.6',
+          links: [],
+          element: {
+            type: 'node',
+            lat: '64.5',
+            lon: '-147.3',
+            changeset: '15'
+          },
+          version: versions.A[0]
+        },
+        {
+          type: 'osm/element',
           id: 'B',
-          changeset: '15',
-          version: versions.B[0] },
-        { deleted: true,
+          links: [],
+          element: {
+            type: 'node',
+            lat: '63.9',
+            lon: '-147.6',
+            changeset: '15'
+          },
+          version: versions.B[0]
+        },
+        // C is here because it is referenced by D
+        {
+          type: 'osm/element',
           id: 'C',
-          changeset: '19',
-          version: versions.C[3] },
-        { type: 'way',
-          refs: [ 'A', 'B', 'C' ],
+          links: [versions.C[1],versions.C[2]].sort(),
+          element: {
+            changeset: '19',
+            deleted: true
+          },
+          version: versions.C[3]
+        },
+        {
+          type: 'osm/element',
           id: 'D',
-          changeset: '15',
-          version: versions.D[0] }
+          links: [],
+          element: {
+            type: 'way',
+            refs: [ 'A', 'B', 'C' ],
+            changeset: '15'
+          },
+          version: versions.D[0]
+        }
       ].sort(idcmp)
       osm0.query(q0, function (err, res) {
         t.ifError(err)
-        t.deepEqual(res.sort(idcmp), ex0, 'updated query 0')
+        t.deepEqual(res.map(idof).sort(), [ 'A','B','C','D' ], 'ids')
+        t.deepEqual(sortLinks(res).sort(idcmp), ex0, 'updated query 0')
       })
       osm1.query(q0, function (err, res) {
         t.ifError(err)
-        t.deepEqual(res.sort(idcmp), ex0, 'updated query 0')
+        t.deepEqual(res.map(idof).sort(), [ 'A','B','C','D' ], 'ids')
+        t.deepEqual(sortLinks(res).sort(idcmp), ex0, 'updated query 1')
       })
     }
   })
@@ -293,3 +320,11 @@ function replicate (osm0, osm1, cb) {
 }
 
 function idof (doc) { return doc.id }
+
+function sortLinks (rows) {
+  return rows.map(function (row) {
+    var copy = Object.assign({}, row)
+    copy.links = copy.links.slice().sort()
+    return copy
+  })
+}
