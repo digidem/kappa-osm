@@ -441,11 +441,13 @@ Osm.prototype._getRefsMembersById = function (id, cb) {
 
 // [OsmVersion] -> {refs: [OsmId]} | {members: [OsmId]} | {}
 Osm.prototype._getRefsMembersByVersions = function (versions, cb) {
+  var self = this
   var res = {}
 
   if (!versions.length) return cb(null, [])
 
   var res = []
+  var elms = []
   var error
   var pending = versions.length
   for (var i=0; i < versions.length; i++) {
@@ -454,6 +456,7 @@ Osm.prototype._getRefsMembersByVersions = function (versions, cb) {
 
   function onElm (err, elm) {
     if (err) error = err
+    elms.push(elm)
     if (--pending) return
     if (error) return cb(error)
 
