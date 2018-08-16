@@ -150,6 +150,37 @@ test('create + delete nodes', function (t) {
   })
 })
 
+test('batch: way', function (t) {
+  var db = createDb()
+
+  var data = [
+    { type: 'node',
+      id: 'A',
+      lat: '0',
+      lon: '0' },
+    { type: 'node',
+      id: 'B',
+      lat: '1',
+      lon: '1' },
+    { type: 'node',
+      id: 'C',
+      lat: '2',
+      lon: '2' },
+    { type: 'way',
+      id: 'D',
+      refs: ['A', 'B', 'C'] }
+  ]
+
+  setup(db, data, function () {
+    db.query([-10,-10,+10,+10], function (err, res) {
+      t.error(err)
+      var ids = res.map(e => e.id).sort()
+      t.deepEquals(ids, ['A', 'B', 'C','D'])
+      t.end()
+    })
+  })
+})
+
 test('batch: deleted way', function (t) {
   var db = createDb()
 
