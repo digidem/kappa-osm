@@ -2,7 +2,7 @@ var test = require('tape')
 var createDb = require('./lib/create-db')
 var setup = require('./lib/setup')
 
-test('delete a way', function (t) {
+test('delete a way (with changesets)', function (t) {
   t.plan(4)
   var batch0 = [
     {

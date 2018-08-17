@@ -187,7 +187,6 @@ test('soft delete a node', function (t) {
         t.equals(elms[0].id, elm.id)
         delete elms[0].id
         delete elms[0].version
-        console.log('elms', elms)
         t.deepEquals(elms[0], nodeDeletion)
       })
     })
