@@ -1,6 +1,5 @@
 var test = require('tape')
 var createDb = require('./lib/create-db')
-var setup = require('./lib/setup')
 
 test.skip('revive deleted nodes during a fork', function (t) {
   t.plan(5)
@@ -75,7 +74,7 @@ test.skip('revive deleted nodes during a fork', function (t) {
           id: 'A',
           element: { type: 'node', lat: '64.5', lon: '-147.3', changeset: '15' },
           links: [],
-          version: versions0.A[0],
+          version: versions0.A[0]
         },
         {
           type: 'osm/element',
@@ -95,12 +94,12 @@ test.skip('revive deleted nodes during a fork', function (t) {
           type: 'osm/element',
           id: 'D',
           deleted: true,
-          element: { type: 'way', refs: ['A','B','C'], changeset: '16' },
+          element: { type: 'way', refs: ['A', 'B', 'C'], changeset: '16' },
           links: [ versions1.D[0] ],
           version: versions1.D[1]
         }
       ]).sort(idcmp)
-      var q = [-148,63,-146,65]
+      var q = [-148, 63, -146, 65]
       osm0.query(q, function (err, res) {
         t.error(err)
         t.deepEqual(sortLinks(res).sort(idcmp), expected)
@@ -140,8 +139,6 @@ function replicate (osm0, osm1, cb) {
     function onready () { if (--p === 0) cb() }
   }
 }
-
-function idof (doc) { return doc.id }
 
 function sortLinks (rows) {
   return rows.map(function (row) {

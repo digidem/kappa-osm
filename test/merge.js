@@ -46,7 +46,7 @@ test('merge', function (t) {
     })
 
     function check () {
-      var q0 = [-148,63,-146,65]
+      var q0 = [-148, 63, -146, 65]
       var ex0 = [
         {
           type: 'osm/element',
@@ -75,7 +75,7 @@ test('merge', function (t) {
         {
           type: 'osm/element',
           id: 'C',
-          links: [versions.C[1],versions.C[2]].sort(),
+          links: [versions.C[1], versions.C[2]].sort(),
           element: {
             type: 'node',
             lat: '62.3',
@@ -106,7 +106,7 @@ test('merge', function (t) {
         t.deepEqual(sortLinks(res).sort(idcmp), ex0, 'updated query 0 (osm1)')
         t.deepEqual(res.map(idof).sort(), ex0.map(idof).sort())
       })
-      var q1 = [-149.5,62,-146,64]
+      var q1 = [-149.5, 62, -146, 64]
       var ex1 = [
         {
           type: 'osm/element',
@@ -135,7 +135,7 @@ test('merge', function (t) {
         {
           type: 'osm/element',
           id: 'C',
-          links: [versions.C[1],versions.C[2]].sort(),
+          links: [versions.C[1], versions.C[2]].sort(),
           element: {
             type: 'node',
             lat: '62.3',

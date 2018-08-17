@@ -1,6 +1,5 @@
 var test = require('tape')
 var createDb = require('./lib/create-db')
-var setup = require('./lib/setup')
 
 test('delete a way (with changesets)', function (t) {
   t.plan(4)
@@ -8,17 +7,17 @@ test('delete a way (with changesets)', function (t) {
     {
       type: 'put',
       id: 'A',
-      value: { type: 'node', lat: '64.5', lon: '-147.3', changeset: '15' },
+      value: { type: 'node', lat: '64.5', lon: '-147.3', changeset: '15' }
     },
     {
       type: 'put',
       id: 'B',
-      value: { type: 'node', lat: '63.9', lon: '-147.6', changeset: '15' },
+      value: { type: 'node', lat: '63.9', lon: '-147.6', changeset: '15' }
     },
     {
       type: 'put',
       id: 'C',
-      value: { type: 'node', lat: '64.2', lon: '-146.5', changeset: '15' },
+      value: { type: 'node', lat: '64.2', lon: '-146.5', changeset: '15' }
     },
     {
       type: 'put',
@@ -46,7 +45,7 @@ test('delete a way (with changesets)', function (t) {
       })
     })
     function check () {
-      var q0 = [-148,63,-146,65]
+      var q0 = [-148, 63, -146, 65]
       osm0.query(q0, function (err, res) {
         t.error(err)
         t.deepEqual(sortLinks(res).sort(idcmp), [
@@ -103,8 +102,6 @@ function replicate (osm0, osm1, cb) {
     function onready () { if (--p === 0) cb() }
   }
 }
-
-function idof (doc) { return doc.id }
 
 function sortLinks (rows) {
   return rows.map(function (row) {

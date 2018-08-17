@@ -1,7 +1,6 @@
 var kappa = require('kappa-core')
 var Osm = require('../..')
 var ram = require('random-access-memory')
-var Grid = require('grid-point-store')
 var memdb = require('memdb')
 
 module.exports = createOne

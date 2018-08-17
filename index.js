@@ -1,19 +1,14 @@
 module.exports = Osm
 
-var kappa = require('kappa-core')
-var through = require('through2')
-var readonly = require('read-only-stream')
 var sub = require('subleveldown')
-var collect = require('collect-stream')
 var utils = require('./lib/utils')
 var once = require('once')
 var xtend = require('xtend')
 var uniq = require('uniq')
-var merge = require('deepmerge')
+var EventEmitter = require('events').EventEmitter
 
 var umkv = require('unordered-materialized-kv')
 var checkElement = require('./lib/check-element')
-var validateBoundingBox = require('./lib/utils.js').validateBoundingBox
 var createRefsIndex = require('./lib/refs-index.js')
 var createChangesetIndex = require('./lib/changeset-index.js')
 var createKvIndex = require('./lib/kv-index.js')
@@ -35,6 +30,7 @@ function Osm (opts) {
   this.writer = null
   this.readyFns = []
   this.core.feed('default', function (err, writer) {
+    if (err) return self.emit('error', err)
     self.writer = writer
     self.readyFns.forEach(function (fn) { fn() })
     self.readyFns = []
@@ -43,15 +39,16 @@ function Osm (opts) {
   // Create indexes
   this._pending = 0
   this._onready = []
-  var kv = umkv(sub(this.index,'kvu'))
+  var kv = umkv(sub(this.index, 'kvu'))
   var bkd = createBkdIndex(
-    this.core, sub(this.index,'bkd'), kv, opts.storage
+    this.core, sub(this.index, 'bkd'), kv, opts.storage
   )
   this.core.use('kv', createKvIndex(kv, sub(this.index, 'kvi')))
   this.core.use('refs', createRefsIndex(sub(this.index, 'refs')))
   this.core.use('changeset', createChangesetIndex(sub(this.index, 'ch')))
   this.core.use('geo', bkd)
 }
+Osm.prototye = Object.create(EventEmitter.prototype)
 
 // Is the log ready for writing?
 Osm.prototype._ready = function (cb) {
@@ -74,7 +71,7 @@ Osm.prototype.ready = function (cb) {
   function onready () {
     if (--self._pending === 0) {
       var ix = self._onready.indexOf(onready)
-      if (ix >= 0) self._onready.splice(ix,1)
+      if (ix >= 0) self._onready.splice(ix, 1)
       cb()
     }
   }
@@ -101,7 +98,7 @@ Osm.prototype.get = function (id, cb) {
     versions = versions || []
     pending = versions.length + 1
 
-    for (var i=0; i < versions.length; i++) {
+    for (var i = 0; i < versions.length; i++) {
       self.getByVersion(versions[i], done)
     }
     done()
@@ -184,7 +181,8 @@ Osm.prototype.put = function (id, element, opts, cb) {
     self._ready(function () {
       self.writer.append(msg, function (err) {
         if (err) return cb(err)
-        var version = self.writer.key.toString('hex') + '@' + (self.writer.length-1)
+        var version = self.writer.key.toString('hex') +
+          '@' + (self.writer.length - 1)
         var elm = xtend(element, { id: id, version: version })
         cb(null, elm)
       })
@@ -241,7 +239,7 @@ Osm.prototype.del = function (id, element, opts, cb) {
     var res = []
     var error
     var pending = links.length
-    for (var i=0; i < links.length; i++) {
+    for (var i = 0; i < links.length; i++) {
       self.getByVersion(links[i], onElm)
     }
 
@@ -258,7 +256,8 @@ Osm.prototype.del = function (id, element, opts, cb) {
     self._ready(function () {
       self.writer.append(msg, function (err) {
         if (err) return cb(err)
-        var version = self.writer.key.toString('hex') + '@' + (self.writer.length-1)
+        var version = self.writer.key.toString('hex') +
+          '@' + (self.writer.length - 1)
         var elm = xtend(element, { id: id, version: version })
         cb(null, elm)
       })
@@ -433,8 +432,6 @@ Osm.prototype._mergeElementRefsAndMembers = function (elms) {
 // OsmId -> {refs: [OsmId]} | {members: [OsmId]} | {}
 Osm.prototype._getRefsMembersById = function (id, cb) {
   var self = this
-  var res = {}
-
   this.get(id, function (err, elms) {
     if (err || !elms || !elms.length) return cb(err, {})
     var res = self._mergeElementRefsAndMembers(elms)
@@ -445,15 +442,12 @@ Osm.prototype._getRefsMembersById = function (id, cb) {
 // [OsmVersion] -> {refs: [OsmId]} | {members: [OsmId]} | {}
 Osm.prototype._getRefsMembersByVersions = function (versions, cb) {
   var self = this
-  var res = {}
-
   if (!versions.length) return cb(null, [])
 
-  var res = []
   var elms = []
   var error
   var pending = versions.length
-  for (var i=0; i < versions.length; i++) {
+  for (var i = 0; i < versions.length; i++) {
     self.getByVersion(versions[i], onElm)
   }
 
@@ -466,9 +460,4 @@ Osm.prototype._getRefsMembersByVersions = function (versions, cb) {
     var res = self._mergeElementRefsAndMembers(elms)
     cb(null, res)
   }
-}
-
-var typeOrder = { node: 0, way: 1, relation: 2 }
-function cmpType (a, b) {
-  return typeOrder[a.type] - typeOrder[b.type]
 }

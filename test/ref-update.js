@@ -1,6 +1,5 @@
 var test = require('tape')
 var createDb = require('./lib/create-db')
-var setup = require('./lib/setup')
 
 test('ref udate', function (t) {
   t.plan(4)
@@ -52,7 +51,7 @@ test('ref udate', function (t) {
     })
 
     function check () {
-      var q0 = [-147.7,63.8,-147.5,64.0]
+      var q0 = [-147.7, 63.8, -147.5, 64.0]
       osm0.query(q0, function (err, res) {
         t.error(err)
         t.deepEqual(sortLinks(res).sort(idcmp), [
@@ -73,7 +72,7 @@ test('ref udate', function (t) {
           {
             type: 'osm/element',
             id: 'D',
-            element: { type: 'way', refs: ['A','B'], changeset: '16' },
+            element: { type: 'way', refs: ['A', 'B'], changeset: '16' },
             links: [ versions.D[0] ],
             version: versions.D[1]
           }
@@ -109,8 +108,6 @@ function replicate (osm0, osm1, cb) {
     function onready () { if (--p === 0) cb() }
   }
 }
-
-function idof (doc) { return doc.id }
 
 function sortLinks (rows) {
   return rows.map(function (row) {
