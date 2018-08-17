@@ -15,6 +15,7 @@ var umkv = require('unordered-materialized-kv')
 var checkElement = require('./lib/check-element')
 var validateBoundingBox = require('./lib/utils.js').validateBoundingBox
 var createRefsIndex = require('./lib/refs-index.js')
+var createChangesetIndex = require('./lib/changeset-index.js')
 var createKvIndex = require('./lib/kv-index.js')
 var createBkdIndex = require('./lib/bkd-index.js')
 
@@ -48,6 +49,7 @@ function Osm (opts) {
   )
   this.core.use('kv', createKvIndex(kv, sub(this.index, 'kvi')))
   this.core.use('refs', createRefsIndex(sub(this.index, 'refs')))
+  this.core.use('changeset', createChangesetIndex(sub(this.index, 'ch')))
   this.core.use('geo', bkd)
 }
 
@@ -370,8 +372,8 @@ Osm.prototype.batch = function (ops, cb) {
 // Id -> { id, version }
 Osm.prototype.getChanges = function (id, cb) {
   var self = this
-  this.core.api.refs.ready(function () {
-    self.core.api.refs.get(id, cb)
+  this.core.api.changeset.ready(function () {
+    self.core.api.changeset.get(id, cb)
   })
 }
 
