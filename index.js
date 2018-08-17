@@ -122,7 +122,7 @@ Osm.prototype._getByVersion = function (version, cb) {
   if (feed) {
     feed.get(seq, cb)
   } else {
-    cb(err, null)
+    cb(null, null)
   }
 }
 
@@ -136,6 +136,7 @@ Osm.prototype.getByVersion = function (version, opts, cb) {
   this._getByVersion(version, function (err, msg) {
     if (err) return cb(err)
     if (opts.raw) return cb(null, msg)
+    if (!msg) return cb(null, null)
     var elm = msg.element
     elm.id = msg.id
     elm.version = version
@@ -456,7 +457,7 @@ Osm.prototype._getRefsMembersByVersions = function (versions, cb) {
 
   function onElm (err, elm) {
     if (err) error = err
-    elms.push(elm)
+    if (elm) elms.push(elm)
     if (--pending) return
     if (error) return cb(error)
 
