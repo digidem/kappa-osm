@@ -2,7 +2,7 @@ var test = require('tape')
 var createDb = require('./lib/create-db')
 var setup = require('./lib/setup')
 
-test('revive deleted nodes during a fork', function (t) {
+test.skip('revive deleted nodes during a fork', function (t) {
   t.plan(5)
   var batch0 = [
     {
