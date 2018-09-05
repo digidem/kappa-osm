@@ -201,6 +201,18 @@ Objects of the following form are returned:
 }
 ```
 
+### var r = osm.history(opts)
+
+Return a readable stream `r` of all the documents in the db sorted by
+`timestamp` or `created_at` (for observations). By default, returns least recent
+documents first.
+
+* `opts.type` - additionally filter results by type as a string
+* `opts.reverse` - when `true`, provide results from most to least recent
+* `opts.lt`, `opts.lte`, `opts.gt`, `opts.gte` - lexicographic sorting options
+
+There is a separate index for filtering by type, so queries should be fast.
+
 ## Architecture
 
 *TODO: talk about forking data & forking architecture*

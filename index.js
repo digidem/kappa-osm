@@ -13,6 +13,7 @@ var createRefsIndex = require('./lib/refs-index.js')
 var createChangesetIndex = require('./lib/changeset-index.js')
 var createKvIndex = require('./lib/kv-index.js')
 var createBkdIndex = require('./lib/bkd-index.js')
+var createHistoryIndex = require('./lib/history-index.js')
 
 module.exports = Osm
 
@@ -47,6 +48,7 @@ function Osm (opts) {
   this.core.use('refs', createRefsIndex(sub(this.index, 'refs')))
   this.core.use('changeset', createChangesetIndex(sub(this.index, 'ch')))
   this.core.use('geo', bkd)
+  this.core.use('history', createHistoryIndex(this, sub(this.index, 'h')))
 }
 Osm.prototye = Object.create(EventEmitter.prototype)
 
@@ -459,5 +461,13 @@ Osm.prototype._getRefsMembersByVersions = function (versions, cb) {
 
     var res = self._mergeElementRefsAndMembers(elms)
     cb(null, res)
+  }
+}
+
+Osm.prototype.history = function (opts) {
+  if (opts && opts.type) {
+    return this.core.api.history.type(opts.type, opts)
+  } else {
+    return this.core.api.history.all(opts)
   }
 }
