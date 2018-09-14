@@ -70,7 +70,7 @@ test('get all docs ordered by date', function (t) {
 })
 
 test('get all docs by type ordered by date', function (t) {
-  t.plan(3)
+  t.plan(5)
   var db = createDb()
   var batch = [
     {
@@ -138,7 +138,17 @@ test('get all docs by type ordered by date', function (t) {
           version: res[3].version
         }
       ])
-      t.end()
+    })
+    collect(db.history({ type: 'way' }), function (err, docs) {
+      t.error(err)
+      t.deepEqual(docs, [
+        {
+          type: 'way',
+          timestamp: '2018-04-01T00:00:00.000Z',
+          id: res[2].id,
+          version: res[2].version
+        }
+      ])
     })
   })
 })

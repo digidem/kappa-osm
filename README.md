@@ -214,6 +214,14 @@ documents first.
 
 There is a separate index for filtering by type, so queries should be fast.
 
+The lexicographic sorting options operate on `timestamp`/`created_at` keys which
+are in ISO 8601 format, as you could get from `.toISOString()`:
+
+```
+> new Date().toISOString()
+'2018-09-14T23:07:53.862Z'
+```
+
 ## Architecture
 
 *TODO: talk about forking data & forking architecture*
