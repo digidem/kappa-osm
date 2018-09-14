@@ -16,18 +16,14 @@ you're building!
 
 ```js
 var kappa = require('kappa-core')
-var Osm = require('kappa-osm')
 var ram = require('random-access-memory')
 var memdb = require('memdb')
-var Geo = require('grid-point-store')
+var Osm = require('kappa-osm')
 
-var core = kappa(ram, { valueEncoding: 'json' })
-var indexes = memdb()
-var geo = Geo(memdb())
 var osm = Osm({
-  core: core,
-  index: indexes,
-  spatial: geo
+  core: kappa(ram, { valueEncoding: 'json' }),
+  index: memdb(),
+  storage: function (name, cb) { cb(null, ram()) }
 })
 
 var node = {
@@ -39,10 +35,12 @@ var node = {
 }
 
 osm.create(node, function (err, node) {
+  if (err) return console.error(err)
   console.log('created node with id', node.id)
-  var bbox = [[-13, -11], [1, 2]]
-  osm.query(bbox, function (err, elms) {
-    console.log(elms)
+  var bbox = [1,-13,2,-11]
+  osm.query(bbox, function (err, nodes) {
+    if (err) console.error(err)
+    else console.log(nodes)
   })
 })
 ```
@@ -50,15 +48,17 @@ osm.create(node, function (err, node) {
 outputs
 
 ```
-created node with id 78d06921416fe95b
-[ { type: 'node',
-    lat: '-12.7',
-    lon: '1.3',
-    tags: { feature: 'water fountain' },
-    changeset: 'abcdef',
-    timestamp: '2017-12-16T00:15:55.238Z',
-    id: '78d06921416fe95b',
-    version: 'eAXxidJuq9PoqiDsyrLKfR4jME9hgYnGSozS7BKXUqbDH' } ]
+created node with id 58261217205dc19b
+[ { type: 'osm/element',
+    id: '58261217205dc19b',
+    element:
+     { type: 'node',
+       lat: '-12.7',
+       lon: '1.3',
+       tags: { feature: 'water fountain' },
+       changeset: 'abcdef' },
+    links: [],
+    version: '366212350b5996f944df9df25e679a98545bdac98f507a06f493d167ff9d5f14@0' } ]
 ```
 
 ## API
@@ -73,8 +73,9 @@ Expected `opts` include:
 
 - `core`: a [kappa-core](https://github.com/noffle/kappa-core) instance
 - `index`: a [levelup](https://github.com/level/levelup) instance
-- `spatial`: a [grid-point-store](https://github.com/noffle/grid-point-store)
-  instance
+- `storage`: a `function (name, cb) {}` that should provide a
+  [random-access-storage](https://github.com/random-access-storage) instance to
+  its callback `cb`
 
 ### osm.create(element, cb)
 
