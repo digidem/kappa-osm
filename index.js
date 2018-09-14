@@ -37,8 +37,6 @@ function Osm (opts) {
   })
 
   // Create indexes
-  this._pending = 0
-  this._onready = []
   var kv = umkv(sub(this.index, 'kvu'))
   var bkd = createBkdIndex(
     this.core, sub(this.index, 'bkd'), kv, opts.storage
@@ -48,7 +46,7 @@ function Osm (opts) {
   this.core.use('changeset', createChangesetIndex(sub(this.index, 'ch')))
   this.core.use('geo', bkd)
 }
-Osm.prototye = Object.create(EventEmitter.prototype)
+Osm.prototype = Object.create(EventEmitter.prototype)
 
 // Is the log ready for writing?
 Osm.prototype._ready = function (cb) {
@@ -57,24 +55,12 @@ Osm.prototype._ready = function (cb) {
 }
 
 Osm.prototype.ready = function (cb) {
-  var self = this
   // TODO: one day we'll have a readonly mode!
   if (!this.writer) {
     this.readyFns.push(cb)
     return
   }
-  this._pending += 3
-  this.core.api.kv.ready(onready)
-  this.core.api.refs.ready(onready)
-  this.core.api.geo.ready(onready)
-  this._onready.push(onready)
-  function onready () {
-    if (--self._pending === 0) {
-      var ix = self._onready.indexOf(onready)
-      if (ix >= 0) self._onready.splice(ix, 1)
-      cb()
-    }
-  }
+  this.core.ready(cb)
 }
 
 // OsmElement -> Error

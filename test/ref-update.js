@@ -1,7 +1,7 @@
 var test = require('tape')
 var createDb = require('./lib/create-db')
 
-test('ref udate', function (t) {
+test('ref update', function (t) {
   t.plan(4)
   var batch0 = [
     {

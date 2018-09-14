@@ -84,17 +84,15 @@ test('query random dataset', function (t) {
     })
   db.batch(batch, function (err) {
     t.error(err)
-    db.ready(function () {
-      db.query(bbox, function (err, elements) {
-        t.error(err)
-        t.ok(Array.isArray(elements))
-        t.equals(elements.length, 100)
-      })
-      collect(db.query(bbox), function (err, elements) {
-        t.error(err)
-        t.ok(Array.isArray(elements))
-        t.equals(elements.length, 100)
-      })
+    db.query(bbox, function (err, elements) {
+      t.error(err)
+      t.ok(Array.isArray(elements))
+      t.equals(elements.length, 100)
+    })
+    collect(db.query(bbox), function (err, elements) {
+      t.error(err)
+      t.ok(Array.isArray(elements))
+      t.equals(elements.length, 100)
     })
   })
 })
@@ -330,8 +328,9 @@ test.skip('opts.type: results sorted by type', function (t) {
 
     var pending = 2
 
-    db.query(bbox, { order: 'type' }, function (err, res) {
+    db.query(bbox, { order: 'type' }, function (err, nodes) {
       t.error(err, 'no error on cb query')
+      var res = nodes.map(function (node) { return node.element })
       t.equals(res.length, 5)
       t.equals(res[0].type, 'node')
       t.equals(res[1].type, 'node')
@@ -341,8 +340,9 @@ test.skip('opts.type: results sorted by type', function (t) {
       if (!--pending) t.end()
     })
 
-    collect(db.query(bbox, { order: 'type' }), function (err, res) {
+    collect(db.query(bbox, { order: 'type' }), function (err, nodes) {
       t.error(err, 'no error on streaming query')
+      var res = nodes.map(function (node) { return node.element })
       t.equals(res.length, 5)
       t.equals(res[0].type, 'node')
       t.equals(res[1].type, 'node')
