@@ -147,7 +147,7 @@ Osm.prototype.put = function (id, element, opts, cb) {
   var msg = {
     type: 'osm/element',
     id: id,
-    element: element
+    element: Object.assign({ timestamp: new Date().toISOString() }, element)
   }
 
   // set links

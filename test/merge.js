@@ -98,13 +98,13 @@ test('merge', function (t) {
       ].sort(idcmp)
       osm0.query(q0, function (err, res) {
         t.ifError(err)
-        t.deepEqual(sortLinks(res).sort(idcmp), ex0, 'updated query 0 (osm0)')
-        t.deepEqual(res.map(idof).sort(), ex0.map(idof).sort())
+        t.deepEqual(sortLinks(rmTimestamp(res)).sort(idcmp), ex0, 'updated query 0 (osm0)')
+        t.deepEqual(rmTimestamp(res).map(idof).sort(), ex0.map(idof).sort())
       })
       osm1.query(q0, function (err, res) {
         t.ifError(err)
-        t.deepEqual(sortLinks(res).sort(idcmp), ex0, 'updated query 0 (osm1)')
-        t.deepEqual(res.map(idof).sort(), ex0.map(idof).sort())
+        t.deepEqual(sortLinks(rmTimestamp(res)).sort(idcmp), ex0, 'updated query 0 (osm1)')
+        t.deepEqual(rmTimestamp(res).map(idof).sort(), ex0.map(idof).sort())
       })
       var q1 = [-149.5, 62, -146, 64]
       var ex1 = [
@@ -158,13 +158,13 @@ test('merge', function (t) {
       ].sort(idcmp)
       osm0.query(q1, function (err, res) {
         t.ifError(err)
-        t.deepEqual(sortLinks(res).sort(idcmp), ex1, 'updated query 1 (osm0)')
-        t.deepEqual(res.map(idof).sort(), ex1.map(idof).sort())
+        t.deepEqual(sortLinks(rmTimestamp(res)).sort(idcmp), ex1, 'updated query 1 (osm0)')
+        t.deepEqual(rmTimestamp(res).map(idof).sort(), ex1.map(idof).sort())
       })
       osm1.query(q1, function (err, res) {
         t.ifError(err)
-        t.deepEqual(sortLinks(res).sort(idcmp), ex1, 'updated query 1 (osm1)')
-        t.deepEqual(res.map(idof).sort(), ex1.map(idof).sort())
+        t.deepEqual(sortLinks(rmTimestamp(res)).sort(idcmp), ex1, 'updated query 1 (osm1)')
+        t.deepEqual(rmTimestamp(res).map(idof).sort(), ex1.map(idof).sort())
       })
     }
   })
@@ -204,5 +204,14 @@ function sortLinks (rows) {
     var copy = Object.assign({}, row)
     copy.links = copy.links.slice().sort()
     return copy
+  })
+}
+
+function rmTimestamp (nodes) {
+  return nodes.map(function (node) {
+    node = Object.assign({}, node)
+    node.element = Object.assign({}, node.element)
+    delete node.element.timestamp
+    return node
   })
 }
