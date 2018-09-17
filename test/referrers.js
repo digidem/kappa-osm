@@ -1,7 +1,6 @@
 var test = require('tape')
 var createDb = require('./lib/create-db')
 var setup = require('./lib/setup')
-var collect = require('./lib/collect')
 
 test('refs API', function (t) {
   var db = createDb()

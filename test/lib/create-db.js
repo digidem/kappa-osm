@@ -1,7 +1,6 @@
 var kappa = require('kappa-core')
 var Osm = require('../..')
 var ram = require('random-access-memory')
-var Grid = require('grid-point-store')
 var memdb = require('memdb')
 
 module.exports = createOne
@@ -12,7 +11,7 @@ function createOne () {
   return Osm({
     core: core,
     index: memdb(),
-    spatial: Grid({ store: memdb(), zoomLevel: 10 })
+    storage: function (name, cb) { cb(null, ram()) }
   })
 }
 

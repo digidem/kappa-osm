@@ -150,6 +150,37 @@ test('create + delete nodes', function (t) {
   })
 })
 
+test('batch: way', function (t) {
+  var db = createDb()
+
+  var data = [
+    { type: 'node',
+      id: 'A',
+      lat: '0',
+      lon: '0' },
+    { type: 'node',
+      id: 'B',
+      lat: '1',
+      lon: '1' },
+    { type: 'node',
+      id: 'C',
+      lat: '2',
+      lon: '2' },
+    { type: 'way',
+      id: 'D',
+      refs: ['A', 'B', 'C'] }
+  ]
+
+  setup(db, data, function () {
+    db.query([-10, -10, +10, +10], function (err, res) {
+      t.error(err)
+      var ids = res.map(e => e.id).sort()
+      t.deepEquals(ids, ['A', 'B', 'C', 'D'])
+      t.end()
+    })
+  })
+})
+
 test('batch: deleted way', function (t) {
   var db = createDb()
 
@@ -175,11 +206,10 @@ test('batch: deleted way', function (t) {
     var op = {type: 'del', id: 'D', value: { changeset: '4' }}
     db.batch([op], function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10, -10, +10, +10], function (err, res) {
         t.error(err)
-        t.equals(res.length, 1)
-        t.equals(res[0].id, 'D')
-        t.equals(res[0].deleted, true)
+        var ids = res.map(e => e.id).sort()
+        t.deepEquals(ids, ['A', 'B', 'C'])
         t.end()
       })
     })
@@ -217,12 +247,11 @@ test('batch: deleted relation', function (t) {
     var op = {type: 'del', id: 'E', value: { changeset: '4' }}
     db.batch([op], function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10, -10, +10, +10], function (err, res) {
         t.error(err)
         res.sort(cmpId)
-        var ids = res.map(e => e.id)
-        t.deepEquals(ids, ['A', 'B', 'C', 'D', 'E'])
-        t.equals(res[4].deleted, true)
+        var ids = res.map(e => e.id).sort()
+        t.deepEquals(ids, ['A', 'B', 'C', 'D'])
         t.end()
       })
     })

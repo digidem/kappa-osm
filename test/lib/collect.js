@@ -1,6 +1,4 @@
+var collect = require('collect-stream')
 module.exports = function (stream, cb) {
-  var res = []
-  stream.on('data', res.push.bind(res))
-  stream.once('end', cb.bind(null, null, res))
-  stream.once('error', cb.bind(null))
+  collect(stream, { encoding: 'object' }, cb)
 }

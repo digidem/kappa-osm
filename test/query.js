@@ -26,7 +26,7 @@ test('bad bbox', function (t) {
 
   var db = createDb()
 
-  var bbox = [[5, -5], [-5, 5]]
+  var bbox = [5, -5, -5, 5]
 
   db.query(bbox, function (err, elements) {
     t.ok(err instanceof Error)
@@ -44,7 +44,7 @@ test('query empty dataset', function (t) {
 
   var db = createDb()
 
-  var bbox = [[-5, 5], [-5, 5]]
+  var bbox = [-5, -5, +5, +5]
 
   db.query(bbox, function (err, elements) {
     t.error(err)
@@ -64,7 +64,7 @@ test('query random dataset', function (t) {
 
   var db = createDb()
 
-  var bbox = [[-10, 10], [-10, 10]]
+  var bbox = [-10, -10, +10, +10]
 
   // Generate a batch of random nodes
   var batch = (new Array(100))
@@ -84,13 +84,11 @@ test('query random dataset', function (t) {
     })
   db.batch(batch, function (err) {
     t.error(err)
-
     db.query(bbox, function (err, elements) {
       t.error(err)
       t.ok(Array.isArray(elements))
       t.equals(elements.length, 100)
     })
-
     collect(db.query(bbox), function (err, elements) {
       t.error(err)
       t.ok(Array.isArray(elements))
@@ -121,11 +119,11 @@ test('relations on bbox nodes', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10, -10, +10, +10],
       expected: [ 'A', 'B', 'C' ]
     },
     {
-      bbox: [[-10, 0], [-10, 0]],
+      bbox: [-10, -10, +0, +0],
       expected: [ 'A', 'C' ]
     }
   ]
@@ -158,15 +156,15 @@ test('ways', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10, -10, +10, +10],
       expected: [ 'A', 'B', 'C', 'D' ]
     },
     {
-      bbox: [[-10, 0], [-10, 0]],
+      bbox: [-10, -10, +0, +0],
       expected: [ 'A', 'B', 'C', 'D' ]
     },
     {
-      bbox: [[-10, -10], [-10, -10]],
+      bbox: [-10, -10, -10, -10],
       expected: []
     }
   ]
@@ -210,15 +208,15 @@ test('relations on ways and nodes', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10, -10, +10, +10],
       expected: [ 'A', 'B', 'C', 'D', 'E' ]
     },
     {
-      bbox: [[-10, 0], [-10, 0]],
+      bbox: [-10, -10, +0, +0],
       expected: [ 'A', 'B', 'C', 'D', 'E' ]
     },
     {
-      bbox: [[-10, -10], [-10, -10]],
+      bbox: [-10, -10, -10, -10],
       expected: []
     }
   ]
@@ -267,15 +265,15 @@ test('relation + super-relation on out-of-bbox node of a way', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10, -10, +10, +10],
       expected: [ 'A', 'B', 'C', 'D', 'E', 'F' ]
     },
     {
-      bbox: [[-10, 0], [-10, 0]],
+      bbox: [-10, -10, +0, +0],
       expected: [ 'A', 'B', 'C', 'D', 'E', 'F' ]
     },
     {
-      bbox: [[-10, -10], [-10, -10]],
+      bbox: [-10, -10, -10, -10],
       expected: []
     }
   ]
@@ -285,7 +283,7 @@ test('relation + super-relation on out-of-bbox node of a way', function (t) {
   })
 })
 
-test('opts.type: results sorted by type', function (t) {
+test.skip('opts.type: results sorted by type', function (t) {
   var db = createDb()
 
   var data = [
@@ -314,7 +312,7 @@ test('opts.type: results sorted by type', function (t) {
     }
   ]
 
-  var bbox = [[-10, 0], [-10, 0]]
+  var bbox = [-10, -10, +0, +0]
 
   var batch = data.map(function (elm) {
     var id = elm.id
@@ -330,8 +328,9 @@ test('opts.type: results sorted by type', function (t) {
 
     var pending = 2
 
-    db.query(bbox, { order: 'type' }, function (err, res) {
+    db.query(bbox, { order: 'type' }, function (err, nodes) {
       t.error(err, 'no error on cb query')
+      var res = nodes.map(function (node) { return node.element })
       t.equals(res.length, 5)
       t.equals(res[0].type, 'node')
       t.equals(res[1].type, 'node')
@@ -341,8 +340,9 @@ test('opts.type: results sorted by type', function (t) {
       if (!--pending) t.end()
     })
 
-    collect(db.query(bbox, { order: 'type' }), function (err, res) {
+    collect(db.query(bbox, { order: 'type' }), function (err, nodes) {
       t.error(err, 'no error on streaming query')
+      var res = nodes.map(function (node) { return node.element })
       t.equals(res.length, 5)
       t.equals(res[0].type, 'node')
       t.equals(res[1].type, 'node')
@@ -375,11 +375,11 @@ test('return only latest version of a modified node', function (t) {
 
     db.put('A', node, function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10, -10, +10, +10], function (err, res) {
         t.error(err)
         t.equals(res.length, 1)
         t.equals(res[0].id, 'A')
-        t.deepEquals(res[0].tags, { foo: 'bar' })
+        t.deepEquals(res[0].element.tags, { foo: 'bar' })
         t.end()
       })
     })
@@ -412,7 +412,7 @@ test('return only latest way that references a node', function (t) {
   ]
 
   var queries = [ {
-    bbox: [[-10, 10], [-10, 10]],
+    bbox: [-10, -10, +10, +10],
     expected: [ 'A', 'B', 'C', 'D' ]
   } ]
 
@@ -431,7 +431,7 @@ test('return only latest way that references a node', function (t) {
         t.deepEquals(ids, [ 'A', 'B', 'C', 'D' ])
         var ways = res.filter(function (elm) { return elm.id === 'D' })
         t.equals(ways.length, 1)
-        t.deepEquals(ways[0].tags, { foo: 'bar' })
+        t.deepEquals(ways[0].element.tags, { foo: 'bar' })
         t.end()
       })
     })
@@ -454,7 +454,7 @@ test('deleted lone node', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10, -10, +10, +10],
       expected: [ 'A', 'B' ]
     }
   ]
@@ -462,13 +462,10 @@ test('deleted lone node', function (t) {
   queryTest(t, db, data, queries, function () {
     db.del('A', { changeset: '4' }, function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10, -10, +10, +10], function (err, res) {
         t.error(err)
-        t.equals(res.length, 2)
-        res.sort(cmpId)
-        t.equals(res[0].id, 'A')
-        t.equals(res[0].deleted, true)
-        t.equals(res[1].id, 'B')
+        t.equals(res.length, 1)
+        t.equals(res[0].id, 'B')
         t.end()
       })
     })
@@ -498,7 +495,7 @@ test('deleted node of a way', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10, -10, +10, +10],
       expected: [ 'A', 'B', 'C', 'D' ]
     }
   ]
@@ -506,14 +503,58 @@ test('deleted node of a way', function (t) {
   queryTest(t, db, data, queries, function () {
     db.del('B', { changeset: '4' }, function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10, -10, +10, +10], function (err, res) {
         t.error(err)
-        t.equals(res.length, 4)
         res.sort(cmpId)
         var ids = res.map(e => e.id)
         t.deepEquals(ids, ['A', 'B', 'C', 'D'])
-        t.equals(res[1].deleted, true)
+        t.equals(res[1].element.deleted, true)
         t.end()
+      })
+    })
+  })
+})
+
+test('deleted node and a way', function (t) {
+  var db = createDb()
+
+  var data = [
+    { type: 'node',
+      id: 'A',
+      lat: '0',
+      lon: '0' },
+    { type: 'node',
+      id: 'B',
+      lat: '1',
+      lon: '1' },
+    { type: 'node',
+      id: 'C',
+      lat: '2',
+      lon: '2' },
+    { type: 'way',
+      id: 'D',
+      refs: ['A', 'B', 'C'] }
+  ]
+
+  var queries = [
+    {
+      bbox: [-10, -10, +10, +10],
+      expected: [ 'A', 'B', 'C', 'D' ]
+    }
+  ]
+
+  queryTest(t, db, data, queries, function () {
+    db.del('B', { changeset: '4' }, function (err) {
+      t.error(err)
+      db.del('D', { changeset: '4' }, function (err) {
+        t.error(err)
+        db.query([-10, -10, +10, +10], function (err, res) {
+          t.error(err)
+          res.sort(cmpId)
+          var ids = res.map(e => e.id)
+          t.deepEquals(ids, ['A', 'C'])
+          t.end()
+        })
       })
     })
   })
@@ -561,7 +602,7 @@ test('update a node', function (t) {
     t.error(err)
     db.put('A', newNode, function (err) {
       t.error(err)
-      db.query([[-10, 11], [-10, 11]], function (err, res) {
+      db.query([-10, -10, +11, +11], function (err, res) {
         t.error(err)
         t.equals(res.length, 4)
         res.sort(cmpId)
@@ -618,7 +659,7 @@ test('update a way\'s refs', function (t) {
     t.error(err)
     db.put('E', newWay, function (err) {
       t.error(err)
-      db.query([[-10, 3], [-10, 3]], function (err, res) {
+      db.query([-10, -10, +3, +3], function (err, res) {
         t.error(err)
         t.equals(res.length, 4)
         res.sort(cmpId)
@@ -653,7 +694,7 @@ test('deleted way', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10, -10, +10, +10],
       expected: [ 'A', 'B', 'C', 'D' ]
     }
   ]
@@ -661,11 +702,10 @@ test('deleted way', function (t) {
   queryTest(t, db, data, queries, function () {
     db.del('D', { changeset: '4' }, function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10, -10, +10, +10], function (err, res) {
         t.error(err)
-        t.equals(res.length, 1)
-        t.equals(res[0].id, 'D')
-        t.equals(res[0].deleted, true)
+        var ids = res.map(function (r) { return r.id })
+        t.deepEqual(ids.sort(), [ 'A', 'B', 'C' ])
         t.end()
       })
     })
@@ -701,7 +741,7 @@ test('deleted relation', function (t) {
 
   var queries = [
     {
-      bbox: [[-10, 10], [-10, 10]],
+      bbox: [-10, -10, +10, +10],
       expected: [ 'A', 'B', 'C', 'D', 'E' ]
     }
   ]
@@ -709,12 +749,11 @@ test('deleted relation', function (t) {
   queryTest(t, db, data, queries, function () {
     db.del('E', { changeset: '4' }, function (err) {
       t.error(err)
-      db.query([[-10, 10], [-10, 10]], function (err, res) {
+      db.query([-10, -10, +10, +10], function (err, res) {
         t.error(err)
         res.sort(cmpId)
         var ids = res.map(e => e.id)
-        t.deepEquals(ids, ['A', 'B', 'C', 'D', 'E'])
-        t.equals(res[4].deleted, true)
+        t.deepEquals(ids, ['A', 'B', 'C', 'D'])
         t.end()
       })
     })

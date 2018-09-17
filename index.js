@@ -1,21 +1,18 @@
 module.exports = Osm
 
-var kappa = require('kappa-core')
-var through = require('through2')
-var readonly = require('read-only-stream')
 var sub = require('subleveldown')
-var collect = require('collect-stream')
 var utils = require('./lib/utils')
 var once = require('once')
 var xtend = require('xtend')
 var uniq = require('uniq')
-var merge = require('deepmerge')
+var EventEmitter = require('events').EventEmitter
 
+var umkv = require('unordered-materialized-kv')
 var checkElement = require('./lib/check-element')
-var validateBoundingBox = require('./lib/utils').validateBoundingBox
-//var createGeoIndex = require('./lib/geo-index')
-var createRefsIndex = require('./lib/refs-index')
-var createKvIndex = require('./lib/kv-index')
+var createRefsIndex = require('./lib/refs-index.js')
+var createChangesetIndex = require('./lib/changeset-index.js')
+var createKvIndex = require('./lib/kv-index.js')
+var createBkdIndex = require('./lib/bkd-index.js')
 
 module.exports = Osm
 
@@ -23,26 +20,33 @@ function Osm (opts) {
   if (!(this instanceof Osm)) return new Osm(opts)
   if (!opts.core) throw new Error('missing param "core"')
   if (!opts.index) throw new Error('missing param "index"')
-  if (!opts.spatial) throw new Error('missing param "spatial"')
+  if (!opts.storage) throw new Error('missing param "storage"')
 
   var self = this
 
   this.core = opts.core
   this.index = opts.index
-  this.spatial = opts.spatial
 
   this.writer = null
   this.readyFns = []
   this.core.feed('default', function (err, writer) {
+    if (err) return self.emit('error', err)
     self.writer = writer
     self.readyFns.forEach(function (fn) { fn() })
     self.readyFns = []
   })
 
   // Create indexes
-  this.core.use('kv', createKvIndex(sub(this.index, 'kv'), this.spatial))
+  var kv = umkv(sub(this.index, 'kvu'))
+  var bkd = createBkdIndex(
+    this.core, sub(this.index, 'bkd'), kv, opts.storage
+  )
+  this.core.use('kv', createKvIndex(kv, sub(this.index, 'kvi')))
   this.core.use('refs', createRefsIndex(sub(this.index, 'refs')))
+  this.core.use('changeset', createChangesetIndex(sub(this.index, 'ch')))
+  this.core.use('geo', bkd)
 }
+Osm.prototype = Object.create(EventEmitter.prototype)
 
 // Is the log ready for writing?
 Osm.prototype._ready = function (cb) {
@@ -56,10 +60,7 @@ Osm.prototype.ready = function (cb) {
     this.readyFns.push(cb)
     return
   }
-  var self = this
-  this.core.api.kv.ready(function () {
-    self.core.api.refs.ready(cb)
-  })
+  this.core.ready(cb)
 }
 
 // OsmElement -> Error
@@ -83,7 +84,7 @@ Osm.prototype.get = function (id, cb) {
     versions = versions || []
     pending = versions.length + 1
 
-    for (var i=0; i < versions.length; i++) {
+    for (var i = 0; i < versions.length; i++) {
       self.getByVersion(versions[i], done)
     }
     done()
@@ -106,7 +107,7 @@ Osm.prototype._getByVersion = function (version, cb) {
   if (feed) {
     feed.get(seq, cb)
   } else {
-    cb(err, null)
+    cb(null, null)
   }
 }
 
@@ -120,6 +121,7 @@ Osm.prototype.getByVersion = function (version, opts, cb) {
   this._getByVersion(version, function (err, msg) {
     if (err) return cb(err)
     if (opts.raw) return cb(null, msg)
+    if (!msg) return cb(null, null)
     var elm = msg.element
     elm.id = msg.id
     elm.version = version
@@ -145,7 +147,7 @@ Osm.prototype.put = function (id, element, opts, cb) {
   var msg = {
     type: 'osm/element',
     id: id,
-    element: element
+    element: Object.assign({ timestamp: new Date().toISOString() }, element)
   }
 
   // set links
@@ -162,11 +164,11 @@ Osm.prototype.put = function (id, element, opts, cb) {
 
   // write to the feed
   function write () {
-    console.log('put', msg)
     self._ready(function () {
       self.writer.append(msg, function (err) {
         if (err) return cb(err)
-        var version = self.writer.key.toString('hex') + '@' + (self.writer.length-1)
+        var version = self.writer.key.toString('hex') +
+          '@' + (self.writer.length - 1)
         var elm = xtend(element, { id: id, version: version })
         cb(null, elm)
       })
@@ -223,7 +225,7 @@ Osm.prototype.del = function (id, element, opts, cb) {
     var res = []
     var error
     var pending = links.length
-    for (var i=0; i < links.length; i++) {
+    for (var i = 0; i < links.length; i++) {
       self.getByVersion(links[i], onElm)
     }
 
@@ -237,11 +239,11 @@ Osm.prototype.del = function (id, element, opts, cb) {
 
   // write to the feed
   function write (msg, cb) {
-    console.log('del', msg)
     self._ready(function () {
       self.writer.append(msg, function (err) {
         if (err) return cb(err)
-        var version = self.writer.key.toString('hex') + '@' + (self.writer.length-1)
+        var version = self.writer.key.toString('hex') +
+          '@' + (self.writer.length - 1)
         var elm = xtend(element, { id: id, version: version })
         cb(null, elm)
       })
@@ -355,8 +357,8 @@ Osm.prototype.batch = function (ops, cb) {
 // Id -> { id, version }
 Osm.prototype.getChanges = function (id, cb) {
   var self = this
-  this.core.api.refs.ready(function () {
-    self.core.api.refs.get(id, cb)
+  this.core.api.changeset.ready(function () {
+    self.core.api.changeset.get(id, cb)
   })
 }
 
@@ -375,237 +377,7 @@ Osm.prototype.query = function (bbox, opts, cb) {
     opts = {}
   }
   opts = opts || {}
-
-  throw new Error('not implemented')
-
-//  // To prevent re-processing elements that were already processed.
-//  var seen = [{}, {}]
-//  var t
-//
-//  var err = validateBoundingBox(bbox)
-//  if (err) {
-//    if (cb) {
-//      return cb(err)
-//    } else {
-//      t = through.obj()
-//      process.nextTick(function () { t.emit('error', err) })
-//      return t
-//    }
-//  }
-//
-//  // For accumulating ways and relations when element type order matters.
-//  var typeQueue = []
-//
-//  var self = this
-//  t = through.obj(onPoint, onFlush)
-//  this.geo.ready(function () {
-//    self.refs.ready(function () {
-//      self.geo.queryStream(bbox).pipe(t)
-//    })
-//  })
-//
-//  if (!cb) {
-//    return readonly(t)
-//  } else {
-//    collect(t, {encoding: 'object'}, cb)
-//  }
-//
-//  // Writes an OSM element to the output stream.
-//  //
-//  // 'gen' is the generation of the added element. This depends on the context
-//  // that the element has been added in. A node directly returned by the geo
-//  // query is gen=0, but a node indirectly found by looking at nodes in a way
-//  // that that gen=0 node belongs to is a gen=1. Same with ways: a way visited
-//  // by a gen=0 node is also gen=0, but one found by an indirect gen=1 node is
-//  // also gen=1. This is a bit difficult to wrap one's head around, but this is
-//  // necessary to prevent any elements from being processed more times than
-//  // they need to be.
-//  function add (elm, gen) {
-//    var alreadySeen = seen[0][elm.version]
-//    if (gen === 1) alreadySeen = alreadySeen || seen[1][elm.version]
-//
-//    if (!seen[0][elm.version] && !seen[1][elm.version]) {
-//      if (opts.order === 'type' && elm.type !== 'node') {
-//        typeQueue.push(elm)
-//      } else {
-//        t.push(elm)
-//      }
-//    }
-//
-//    if (!alreadySeen) {
-//      seen[gen][elm.version] = true
-//      seen[1][elm.version] = true
-//    }
-//
-//    return !alreadySeen
-//  }
-//
-//  function isRelation (elm) {
-//    return elm.type === 'relation'
-//  }
-//
-//  // TODO: can we up the concurrency here & rely on automatic backpressure?
-//  function onPoint (version, _, next) {
-//    next = once(next)
-//
-//    self.getByVersion(version, function (err, elm) {
-//      if (err) return next(err)
-//
-//      // Get all referrer ways and relations recursively.
-//      getRefererElementsRec(elm, 0, function (err, res) {
-//        if (err) return next(err)
-//
-//        // Only add a node here if it can prove that it has only relations
-//        // referring to it. Otherwise it'll get picked up by traversing a way
-//        // later. This is important for making sure that a deleted way doesn't
-//        // return its nodes if they aren't referred to by anything else.
-//        var addNode = res.every(isRelation)
-//        if (addNode) add(elm, 0)
-//
-//        if (!res.length) return next()
-//
-//        // For each element that refers to the node, get all of its forked
-//        // heads and, for ways, get all nodes they reference.
-//        var pending = res.length
-//        for (var i = 0; i < res.length; i++) {
-//          var elm2 = res[i]
-//          if (elm2.type === 'way' && !elm2.deleted) {
-//            pending++
-//            getWayNodes(elm2, function (err, nodes) {
-//              if (err) return next(err)
-//
-//              pending += nodes.length
-//              if (!--pending) return next()
-//
-//              // Recursively get their heads & relations
-//              for (var j = 0; j < nodes.length; j++) {
-//                getWayNodeRec(nodes[j], function (err, elms) {
-//                  if (err) return cb(err)
-//                  if (!--pending) return next()
-//                })
-//              }
-//            })
-//          }
-//
-//          if (addNode) {
-//            getAllHeads(elm.id, function (err, heads) {
-//              if (err) return next(err)
-//              if (!--pending) return next()
-//            })
-//          } else {
-//            if (!--pending) return next()
-//          }
-//        }
-//      })
-//    })
-//  }
-//
-//  function onFlush (cb) {
-//    typeQueue.sort(cmpType).forEach(function (elm) { t.push(elm) })
-//    cb()
-//  }
-//
-//  // Get all heads of all nodes in a way.
-//  function getWayNodes (elm, cb) {
-//    cb = once(cb)
-//    var res = []
-//    var pending = elm.refs.length
-//
-//    for (var i = 0; i < elm.refs.length; i++) {
-//      getAllHeads(elm.refs[i], function (err, heads) {
-//        if (err) cb(err)
-//        res.push.apply(res, heads)
-//        if (!--pending) return cb(null, res)
-//      })
-//    }
-//  }
-//
-//  // Get all heads of the node, and all relations referring to it (recursively).
-//  function getWayNodeRec (elm, cb) {
-//    cb = once(cb)
-//    var res = []
-//    var pending = 2
-//
-//    getRefererElementsRec(elm, 1, function (err, elms) {
-//      if (err) return cb(err)
-//      res.push.apply(res, elms)
-//      if (!--pending) cb(null, res)
-//    })
-//
-//    getAllHeads(elm.id, function (err, heads) {
-//      if (err) return cb(err)
-//      res.push.apply(res, heads)
-//      if (!--pending) cb(null, res)
-//    })
-//  }
-//
-//  // Get all head versions of all ways and relations referring to an element,
-//  // recursively.
-//  function getRefererElementsRec (elm, gen, cb) {
-//    cb = once(cb)
-//    var res = []
-//
-//    getRefererElements(elm, gen, function (err, elms) {
-//      if (err) return cb(err)
-//      if (!elms.length) return cb(null, [])
-//
-//      var pending = elms.length
-//      for (var i = 0; i < elms.length; i++) {
-//        res.push(elms[i])
-//
-//        getRefererElementsRec(elms[i], gen, function (err, elms) {
-//          if (err) return cb(err)
-//          for (var j = 0; j < elms.length; j++) {
-//            res.push(elms[j])
-//          }
-//          if (!--pending) cb(null, res)
-//        })
-//      }
-//    })
-//  }
-//
-//  // Get all head versions of all ways and relations referring to an element.
-//  function getRefererElements (elm, gen, cb) {
-//    cb = once(cb)
-//    var res = []
-//
-//    // XXX: uncomment this to skip ref lookups on indirect nodes
-//    // if (gen === 1) return cb(null, [])
-//
-//    self.refs.getReferersById(elm.id, function (err, refs) {
-//      if (err) return cb(err)
-//      if (!refs.length) return cb(null, [])
-//
-//      var pending = refs.length
-//      for (var i = 0; i < refs.length; i++) {
-//        seen[gen][refs[i].id] = true
-//
-//        self.get(refs[i].id, function (err, elms) {
-//          if (err) return cb(err)
-//          for (var j = 0; j < elms.length; j++) {
-//            add(elms[j], gen)
-//            res.push(elms[j])
-//          }
-//          if (!--pending) cb(null, res)
-//        })
-//      }
-//    })
-//  }
-//
-//  function getAllHeads (id, cb) {
-//    var res = []
-//
-//    if (seen[0][id]) return cb(null, [])
-//    seen[0][id] = true
-//
-//    self.get(id, function (err, elms) {
-//      if (err) return cb(err)
-//      for (var i = 0; i < elms.length; i++) {
-//        if (add(elms[i], 1)) res.push(elms[i])
-//      }
-//      cb(null, res)
-//    })
-//  }
+  return this.core.api.geo.query(bbox, opts, cb)
 }
 
 Osm.prototype.createReplicationStream = function (opts) {
@@ -646,8 +418,6 @@ Osm.prototype._mergeElementRefsAndMembers = function (elms) {
 // OsmId -> {refs: [OsmId]} | {members: [OsmId]} | {}
 Osm.prototype._getRefsMembersById = function (id, cb) {
   var self = this
-  var res = {}
-
   this.get(id, function (err, elms) {
     if (err || !elms || !elms.length) return cb(err, {})
     var res = self._mergeElementRefsAndMembers(elms)
@@ -657,28 +427,23 @@ Osm.prototype._getRefsMembersById = function (id, cb) {
 
 // [OsmVersion] -> {refs: [OsmId]} | {members: [OsmId]} | {}
 Osm.prototype._getRefsMembersByVersions = function (versions, cb) {
-  var res = {}
-
+  var self = this
   if (!versions.length) return cb(null, [])
 
-  var res = []
+  var elms = []
   var error
   var pending = versions.length
-  for (var i=0; i < versions.length; i++) {
+  for (var i = 0; i < versions.length; i++) {
     self.getByVersion(versions[i], onElm)
   }
 
   function onElm (err, elm) {
     if (err) error = err
+    if (elm) elms.push(elm)
     if (--pending) return
     if (error) return cb(error)
 
     var res = self._mergeElementRefsAndMembers(elms)
     cb(null, res)
   }
-}
-
-var typeOrder = { node: 0, way: 1, relation: 2 }
-function cmpType (a, b) {
-  return typeOrder[a.type] - typeOrder[b.type]
 }
