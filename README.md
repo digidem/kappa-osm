@@ -209,10 +209,12 @@ Return a readable stream `r` of all the documents in the db sorted by
 documents first.
 
 * `opts.type` - additionally filter results by type as a string
+* `opts.id` - only show results for a single string id
 * `opts.reverse` - when `true`, provide results from most to least recent
 * `opts.lt`, `opts.lte`, `opts.gt`, `opts.gte` - lexicographic sorting options
 
-There is a separate index for filtering by type, so queries should be fast.
+There is a separate index for filtering by type and id each, so queries should
+be fast. Filtering by id or type are exclusive options.
 
 The lexicographic sorting options operate on `timestamp`/`created_at` keys which
 are in ISO 8601 format, as you could get from `.toISOString()`:
