@@ -229,16 +229,6 @@ test('create bad ways', function (t) {
     },
     {
       type: 'way',
-      changeset: '14',
-      refs: ['hi']
-    },
-    {
-      type: 'way',
-      changeset: '14',
-      refs: ['hi', 'there']
-    },
-    {
-      type: 'way',
       changeset: 14,
       refs: ['hi', 'there', 'friend']
     },
@@ -320,12 +310,6 @@ test('create bad relations </pun>', function (t) {
       type: 'relation',
       changeset: '21',
       tags: { foo: 'bar' }
-    },
-    {
-      type: 'relation',
-      changeset: '21',
-      tags: {},
-      members: []
     },
     {
       type: 'relation',

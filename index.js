@@ -6,6 +6,7 @@ var once = require('once')
 var xtend = require('xtend')
 var uniq = require('uniq')
 var EventEmitter = require('events').EventEmitter
+var through = require('through2')
 
 var umkv = require('unordered-materialized-kv')
 var checkElement = require('./lib/check-element')
@@ -451,7 +452,16 @@ Osm.prototype._getRefsMembersByVersions = function (versions, cb) {
 }
 
 Osm.prototype.history = function (opts) {
-  if (opts && opts.type) {
+  if (opts && opts.id && opts.type) {
+    var stream = through.obj()
+    var err = new Error('id and type are exclusive history options')
+    process.nextTick(function () {
+      stream.emit('error', err)
+    })
+    return stream
+  } else if (opts && opts.id) {
+    return this.core.api.history.id(opts.id, opts)
+  } else if (opts && opts.type) {
     return this.core.api.history.type(opts.type, opts)
   } else {
     return this.core.api.history.all(opts)
