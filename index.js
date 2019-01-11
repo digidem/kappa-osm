@@ -3,7 +3,6 @@ module.exports = Osm
 var sub = require('subleveldown')
 var utils = require('./lib/utils')
 var once = require('once')
-var xtend = require('xtend')
 var uniq = require('uniq')
 var EventEmitter = require('events').EventEmitter
 var through = require('through2')
@@ -74,11 +73,13 @@ Osm.prototype.create = function (element, cb) {
   this.put(id, element, cb)
 }
 
-// OsmId -> [OsmElement]
+// OsmId -> [OsmDocument]
 Osm.prototype.get = function (id, cb) {
   var self = this
 
-  var elms = []
+  // TODO: should all public APIs do a core.ready()?
+
+  var docs = []
   var error
   var pending = 0
 
@@ -93,12 +94,12 @@ Osm.prototype.get = function (id, cb) {
     done()
   })
 
-  function done (err, elm) {
+  function done (err, doc) {
     if (err) error = err
-    if (elm) elms.push(elm)
+    if (doc) docs.push(doc)
     if (--pending) return
     if (error) cb(error)
-    else cb(null, elms)
+    else cb(null, docs)
   }
 }
 
@@ -114,7 +115,7 @@ Osm.prototype._getByVersion = function (version, cb) {
   }
 }
 
-// OsmVersion -> [OsmElement]
+// OsmVersion -> [OsmDocument]
 Osm.prototype.getByVersion = function (version, opts, cb) {
   if (typeof opts === 'function' && !cb) {
     cb = opts
@@ -123,16 +124,14 @@ Osm.prototype.getByVersion = function (version, opts, cb) {
 
   this._getByVersion(version, function (err, doc) {
     if (err) return cb(err)
-    if (opts.raw) return cb(null, doc)
+    if (opts.raw) return cb(null, doc) // TODO: can we nix this now?
     if (!doc) return cb(null, null)
-    var elm = doc.element
-    elm.id = doc.id
-    elm.version = version
-    cb(null, elm)
+    doc.content.version = version
+    cb(null, doc)
   })
 }
 
-// OsmId, OsmElement -> OsmElement
+// OsmId, OsmElement -> OsmDocument
 Osm.prototype.put = function (id, element, opts, cb) {
   if (opts && !cb && typeof opts === 'function') {
     cb = opts
@@ -148,18 +147,21 @@ Osm.prototype.put = function (id, element, opts, cb) {
 
   var doc = {
     type: 'osm/element',
-    id: id,
-    element: Object.assign({ timestamp: new Date().toISOString() }, element)
+    content: Object.assign({
+      id: id,
+      timestamp: new Date().toISOString(),
+      links: []
+    }, element)
   }
 
   // set links
   if (opts.links) {
-    doc.links = opts.links
+    doc.content.links = opts.links
     write()
   } else {
     self.core.api.kv.get(id, function (err, versions) {
       if (err) return cb(err)
-      doc.links = versions
+      doc.content.links = versions
       write()
     })
   }
@@ -171,8 +173,8 @@ Osm.prototype.put = function (id, element, opts, cb) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') +
           '@' + (self.writer.length - 1)
-        var elm = xtend(element, { id: id, version: version })
-        cb(null, elm)
+        doc.content = Object.assign(element, { version: version })
+        cb(null, doc)
       })
     })
   }
@@ -199,12 +201,14 @@ Osm.prototype.del = function (id, element, opts, cb) {
       var refs = self._mergeElementRefsAndMembers(elms)
       var doc = {
         type: 'osm/element',
-        id: id,
-        element: xtend({deleted: true}, element),
-        links: links
+        content: Object.assign({
+          deleted: true,
+          id: id,
+          links: links
+        }, element)
       }
-      if (refs.refs) doc.element.refs = refs.refs
-      else if (refs.members) doc.element.members = refs.members
+      if (refs.refs) doc.content.refs = refs.refs
+      else if (refs.members) doc.content.members = refs.members
       write(doc, cb)
     })
   })
@@ -228,10 +232,10 @@ Osm.prototype.del = function (id, element, opts, cb) {
     var error
     var pending = links.length
     for (var i = 0; i < links.length; i++) {
-      self.getByVersion(links[i], onElm)
+      self.getByVersion(links[i], onDoc)
     }
 
-    function onElm (err, elm) {
+    function onDoc (err, doc) {
       if (err) error = err
       if (--pending) return
       if (error) return cb(error)
@@ -246,8 +250,8 @@ Osm.prototype.del = function (id, element, opts, cb) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') +
           '@' + (self.writer.length - 1)
-        var elm = xtend(element, { id: id, version: version })
-        cb(null, elm)
+        doc.content.version = version
+        cb(null, doc)
       })
     })
   }
@@ -275,7 +279,7 @@ Osm.prototype.batch = function (ops, cb) {
     for (var i = 0; i < ops.length; i++) {
       if (ops[i].type === 'del') {
         pending++
-        updateRefs(ops[i].id, ops[i].links, ops[i].value, function (err) {
+        updateRefs(ops[i].element, function (err) {
           if (err) error = err
           if (!--pending) cb(error)
         })
@@ -287,14 +291,14 @@ Osm.prototype.batch = function (ops, cb) {
   function populateMissingLinks (cb) {
     var pending = 1
     for (var i = 0; i < ops.length; i++) {
-      if (!ops[i].id) {
-        ops[i].id = utils.generateId()
-        ops[i].links = []
-      } else if (!ops[i].links) {
+      if (!ops[i].element.id) {
+        ops[i].element.id = utils.generateId()
+        ops[i].element.links = []
+      } else if (!ops[i].element.links) {
         pending++
         ;(function get (op) {
           self.core.api.kv.get(op.id, function (err, versions) {
-            op.links = versions || []
+            op.element.links = versions || []
             if (!--pending) cb(err)
           })
         })(ops[i])
@@ -304,7 +308,7 @@ Osm.prototype.batch = function (ops, cb) {
   }
 
   function writeData (cb) {
-    var batch = ops.map(osmOpToMsg)
+    var batch = ops.map(osmOpToDoc)
 
     self._ready(function () {
       var key = self.writer.key.toString('hex')
@@ -313,7 +317,7 @@ Osm.prototype.batch = function (ops, cb) {
         if (err) return cb(err)
         var res = batch.map(function (doc, n) {
           var version = key + '@' + (startSeq + n)
-          return xtend(doc.element, {
+          return Object.assign(doc.content, {
             id: doc.id,
             version: version
           })
@@ -323,9 +327,9 @@ Osm.prototype.batch = function (ops, cb) {
     })
   }
 
-  function updateRefs (id, links, elm, cb) {
-    if (links) self._getRefsMembersByVersions(links, done)
-    else self._getRefsMembersById(id, done)
+  function updateRefs (elm, cb) {
+    if (elm.links) self._getRefsMembersByVersions(elm.links, done)
+    else self._getRefsMembersById(elm.id, done)
 
     function done (err, res) {
       if (err) return cb(err)
@@ -335,20 +339,16 @@ Osm.prototype.batch = function (ops, cb) {
     }
   }
 
-  function osmOpToMsg (op) {
+  function osmOpToDoc (op) {
     if (op.type === 'put') {
       return {
         type: 'osm/element',
-        id: op.id,
-        element: op.value,
-        links: op.links
+        content: op.element
       }
     } else if (op.type === 'del') {
       return {
         type: 'osm/element',
-        id: op.id,
-        element: xtend(op.value, { deleted: true }),
-        links: op.links
+        content: Object.assign(op.element, { deleted: true })
       }
     } else {
       cb(new Error('unknown type'))

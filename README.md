@@ -61,6 +61,14 @@ created node with id 58261217205dc19b
     version: '366212350b5996f944df9df25e679a98545bdac98f507a06f493d167ff9d5f14@0' } ]
 ```
 
+## Terminology
+
+- **Document**: this is the basic object type that the database operates on. A document has a `type` and `content` field. The data in `content` will vary depending on the `type` of document it is.
+- **Element**: short for "OSM element". An element has a document type of `'osm/element'`.
+
+Basically, a `document` is a database-level object, and an `element` is an
+OpenStreetMap-specific data type within some documents.
+
 ## API
 
 ```js
@@ -80,8 +88,23 @@ Expected `opts` include:
 ### osm.create(element, cb)
 
 Create the new OSM element `element` and add it to the database. The resulting
-element, populated with the `id` and `version` fields, is returned by the
-callback `cb`.
+document, is returned by the callback `cb`. It has the form
+
+```js
+{
+  type: 'osm/element',
+  element: {
+    type: 'node',
+    id: 123567,
+    version: 'abcdefgh@17',
+    lat: 14,
+    lon: 12,
+    changeset: '145',
+    tags: {}
+  },
+  links: [ 'versionA', 'versionB' ]
+}
+```
 
 ### osm.get(id, cb)
 
@@ -101,6 +124,7 @@ element. It looks like
 {
   type: 'osm/element',
   id: 123567,
+  version: 'abcdefgh@17',
   element: {
     type: 'node',
     lat: 14,
@@ -108,15 +132,16 @@ element. It looks like
     changeset: '145',
     tags: {}
   },
-  links: [ 'versionA', 'versionB', ]
+  links: [ 'versionA', 'versionB' ]
 }
 ```
 
 ### osm.put(id, element, [opts, ]cb)
 
-Update an existing element with ID `id` to be the OSM element `element`. The new
-element should have all fields that the OSM element would have. The `type` of
-the element cannot be changed.
+Update an existing element with ID `id` to be the OSM element `element`. The
+new element should have all fields that the OSM element would have. The `type`
+of the element cannot be changed. The fields `id` and `version` are dynamically
+added to the element provided.
 
 If the value of ID currently returns two or more elements, this new value will
 replace them all.
@@ -124,9 +149,12 @@ replace them all.
 The only valid `opts` right now is `opts.links`: an array of version strings of
 elements that are to be replaced by this one.
 
-`cb` is called with the new element, including `id` and `version` properties.
+`cb` is called with the new element, including the added `id` and `version`
+properties.
 
-### osm.del(id, value, cb)
+### osm.del(id, element, [opts, ]cb)
+
+TODO: can we skip opts.links by letting the user pass in a document?
 
 Marks the element `id` as deleted. A deleted document can be `get` and
 `getByVersion`'d like a normal document, and will always have the `{ deleted:
@@ -135,22 +163,22 @@ true }` field set.
 Deleted ways, nodes, and relations are all still returned by the `query` API.
 The nodes of a deleted way are not included in the results.
 
+`cb` returns the resulting document.
+
 ### osm.batch(ops, cb)
 
-Create and update many elements atomically. `ops` is an array of objects
-describing the elements to be added or updated.
+Create and update many documents atomically. `ops` is an array of objects
+describing the documents to be added or updated.
 
 ```js
 {
   type: 'put|del',
-  id: 'id',
-  value: { /* element */ },
-  links: [version0, version1, ...]
+  element: { /* element */ }
 }
 ```
 
-If no `id` field is set, the element is created, otherwise it is updated with
-the element `value`.
+If `type` is `'put'` and no `id` field is set in the `element`, the element is
+created (and a new `id` generated), otherwise it is updated to `element`.
 
 An operation type of `'put'` inserts a new element or modifies an existing one,
 while a type of`'del'` will mark the element as deleted.
