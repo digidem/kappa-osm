@@ -121,12 +121,12 @@ Osm.prototype.getByVersion = function (version, opts, cb) {
     opts = {}
   }
 
-  this._getByVersion(version, function (err, msg) {
+  this._getByVersion(version, function (err, doc) {
     if (err) return cb(err)
-    if (opts.raw) return cb(null, msg)
-    if (!msg) return cb(null, null)
-    var elm = msg.element
-    elm.id = msg.id
+    if (opts.raw) return cb(null, doc)
+    if (!doc) return cb(null, null)
+    var elm = doc.element
+    elm.id = doc.id
     elm.version = version
     cb(null, elm)
   })
@@ -146,8 +146,7 @@ Osm.prototype.put = function (id, element, opts, cb) {
   var errs = checkElement(element, 'put')
   if (errs.length) return cb(errs[0])
 
-  // TODO: how are 'links' passed in? opts.links?
-  var msg = {
+  var doc = {
     type: 'osm/element',
     id: id,
     element: Object.assign({ timestamp: new Date().toISOString() }, element)
@@ -155,12 +154,12 @@ Osm.prototype.put = function (id, element, opts, cb) {
 
   // set links
   if (opts.links) {
-    msg.links = opts.links
+    doc.links = opts.links
     write()
   } else {
     self.core.api.kv.get(id, function (err, versions) {
       if (err) return cb(err)
-      msg.links = versions
+      doc.links = versions
       write()
     })
   }
@@ -168,7 +167,7 @@ Osm.prototype.put = function (id, element, opts, cb) {
   // write to the feed
   function write () {
     self._ready(function () {
-      self.writer.append(msg, function (err) {
+      self.writer.append(doc, function (err) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') +
           '@' + (self.writer.length - 1)
@@ -198,15 +197,15 @@ Osm.prototype.del = function (id, element, opts, cb) {
     getElms(links, function (err, elms) {
       if (err) return cb(err)
       var refs = self._mergeElementRefsAndMembers(elms)
-      var msg = {
+      var doc = {
         type: 'osm/element',
         id: id,
         element: xtend({deleted: true}, element),
         links: links
       }
-      if (refs.refs) msg.element.refs = refs.refs
-      else if (refs.members) msg.element.members = refs.members
-      write(msg, cb)
+      if (refs.refs) doc.element.refs = refs.refs
+      else if (refs.members) doc.element.members = refs.members
+      write(doc, cb)
     })
   })
 
@@ -241,9 +240,9 @@ Osm.prototype.del = function (id, element, opts, cb) {
   }
 
   // write to the feed
-  function write (msg, cb) {
+  function write (doc, cb) {
     self._ready(function () {
-      self.writer.append(msg, function (err) {
+      self.writer.append(doc, function (err) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') +
           '@' + (self.writer.length - 1)
@@ -312,10 +311,10 @@ Osm.prototype.batch = function (ops, cb) {
       var startSeq = self.writer.length
       self.writer.append(batch, function (err) {
         if (err) return cb(err)
-        var res = batch.map(function (msg, n) {
+        var res = batch.map(function (doc, n) {
           var version = key + '@' + (startSeq + n)
-          return xtend(msg.element, {
-            id: msg.id,
+          return xtend(doc.element, {
+            id: doc.id,
             version: version
           })
         })
