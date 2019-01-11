@@ -76,6 +76,77 @@ test('delete a way (with changesets)', function (t) {
   })
 })
 
+test('delete a forked way', function (t) {
+  t.plan(8)
+
+  var batch0 = [
+    {
+      type: 'put',
+      id: 'A',
+      value: { type: 'node', lat: '64.5', lon: '-147.3', changeset: '15' }
+    },
+    {
+      type: 'put',
+      id: 'B',
+      value: { type: 'node', lat: '63.9', lon: '-147.6', changeset: '15' }
+    },
+    {
+      type: 'put',
+      id: 'C',
+      value: { type: 'node', lat: '64.2', lon: '-146.5', changeset: '15' }
+    },
+    {
+      type: 'put',
+      id: 'D',
+      value: { type: 'way', refs: [ 'A', 'B', 'C' ], changeset: '16' }
+    }
+  ]
+
+  createDb.two(function (osm0, osm1) {
+    var versions = { A: [], B: [], C: [], D: [] }
+    osm0.batch(batch0, function (err, docs) {
+      t.error(err)
+      docs.forEach(function (doc) {
+        versions[doc.id].push(doc.version)
+      })
+
+      var batch1 = [
+        {
+          type: 'put',
+          id: 'D',
+          value: { type: 'way', refs: [ 'A', 'B' ], changeset: '17' }
+        },
+        {
+          type: 'put',
+          id: 'D',
+          value: { type: 'way', refs: [ 'C' ], changeset: '18' }
+        }
+      ]
+      batch1[0].links = [versions.D[0]]
+      batch1[1].links = [versions.D[0]]
+
+      osm1.batch(batch1, function (err, docs) {
+        t.error(err)
+        docs.forEach(function (doc) {
+          versions[doc.id].push(doc.version)
+        })
+
+        osm1.del('D', {changeset:'19'}, function (err) {
+          t.error(err)
+
+          osm1.get('D', function (err, elms) {
+            t.error(err)
+            t.equal(elms.length, 1)
+            t.equal(elms[0].id, 'D')
+            t.deepEqual(elms[0].refs, ['A', 'B', 'C'])
+            t.ok(elms[0].deleted)
+          })
+        })
+      })
+    })
+  })
+})
+
 function idcmp (a, b) {
   if (a.id === b.id) return a.version < b.version ? -1 : 1
   return a.id < b.id ? -1 : 1
