@@ -130,7 +130,7 @@ Marks the element `id` as deleted. A deleted document can be `get` and
 true }` field set.
 
 Deleted ways, nodes, and relations are all still returned by the `query` API.
-The nodes of a deleted are not included in the results.
+The nodes of a deleted way are not included in the results.
 
 ### osm.batch(ops, cb)
 
