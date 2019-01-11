@@ -112,7 +112,7 @@ element. It looks like
 }
 ```
 
-### osm.put(id, element, cb)
+### osm.put(id, element, [opts, ]cb)
 
 Update an existing element with ID `id` to be the OSM element `element`. The new
 element should have all fields that the OSM element would have. The `type` of
@@ -120,6 +120,9 @@ the element cannot be changed.
 
 If the value of ID currently returns two or more elements, this new value will
 replace them all.
+
+The only valid `opts` right now is `opts.links`: an array of version strings of
+elements that are to be replaced by this one.
 
 `cb` is called with the new element, including `id` and `version` properties.
 
