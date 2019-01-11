@@ -161,8 +161,8 @@ fast as possible.
 
 Retrieves all `node`s, `way`s, and `relation`s touching the bounding box `bbox`.
 
-`bbox` is expected to be of the format `[[minLat, maxLat], [minLon, maxLon]]`.
-Latitude runs between `(-85, 85)`, and longitude between `(-180, 180)`.
+`bbox` is expected to be of the format `[WEST, SOUTH, EAST, NORTH]`.
+Latitude (north/south) runs between `(-85, 85)`, and longitude (west/east) between `(-180, 180)`.
 
 A callback parameter `cb` is optional. If given, it will be called as
 `cb(err, elements)`. If not provided or set to `null`, a Readable stream will be
