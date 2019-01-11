@@ -233,6 +233,7 @@ Osm.prototype.del = function (id, element, opts, cb) {
 
     function onElm (err, elm) {
       if (err) error = err
+      else res.push(elm)
       if (--pending) return
       if (error) return cb(error)
       cb(null, res)
