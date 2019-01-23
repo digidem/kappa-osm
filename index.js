@@ -16,8 +16,6 @@ var createKvIndex = require('./lib/kv-index.js')
 var createBkdIndex = require('./lib/bkd-index.js')
 var createHistoryIndex = require('./lib/history-index.js')
 
-module.exports = Osm
-
 function Osm (opts) {
   if (!(this instanceof Osm)) return new Osm(opts)
   if (!opts.core) throw new Error('missing param "core"')
