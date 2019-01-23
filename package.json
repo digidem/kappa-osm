@@ -2,7 +2,7 @@
   "name": "kappa-osm",
   "description": "Peer-to-peer OpenStreetMap database over a kappa architecture.",
   "author": "Stephen Whitmore <sww@eight.net>",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "repository": {
     "url": "git://github.com/noffle/kappa-osm.git"
   },
