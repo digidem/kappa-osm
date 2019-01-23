@@ -44,11 +44,11 @@ function Osm (opts) {
   var bkd = createBkdIndex(
     this.core, sub(this.index, 'bkd'), kv, opts.storage
   )
-  this.core.use('kv', createKvIndex(kv, sub(this.index, 'kvi')))
-  this.core.use('refs', createRefsIndex(sub(this.index, 'refs')))
-  this.core.use('changeset', createChangesetIndex(sub(this.index, 'ch')))
-  this.core.use('geo', bkd)
-  this.core.use('history', createHistoryIndex(this, sub(this.index, 'h')))
+  this.core.use('kv', 1, createKvIndex(kv, sub(this.index, 'kvi')))
+  this.core.use('refs', 1, createRefsIndex(sub(this.index, 'refs')))
+  this.core.use('changeset', 1, createChangesetIndex(sub(this.index, 'ch')))
+  this.core.use('geo', 1, bkd)
+  this.core.use('history', 1, createHistoryIndex(this, sub(this.index, 'h')))
 }
 Osm.prototype = Object.create(EventEmitter.prototype)
 
