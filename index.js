@@ -25,6 +25,9 @@ function Osm (opts) {
   var self = this
 
   this.core = opts.core
+  this.core.on('error', function (err) {
+    self.emit('error', err)
+  })
   this.index = opts.index
 
   this.writer = null

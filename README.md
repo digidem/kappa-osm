@@ -227,6 +227,13 @@ are in ISO 8601 format, as you could get from `.toISOString()`:
 '2018-09-14T23:07:53.862Z'
 ```
 
+### osm.on('error', function (err) {})
+
+Event emitted when an error within kappa-core has occurred. This is very
+important to listen on, lest things suddenly seem to break and it's not
+immediately clear why.
+
+
 ## Architecture
 
 *TODO: talk about forking data & forking architecture*
