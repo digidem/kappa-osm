@@ -2,15 +2,21 @@
 
 > Peer-to-peer OpenStreetMap database over [kappa-core](https://github.com/noffle/kappa-core)
 
+## Purpose
+
+A simple and easy-to-use geographic/spatial database that works offline, and
+can synchronize with other instances of the database using a variety of
+methods, internet and non (local wifi, USB keys, bluetooth, and more).
+
 ## Current Status
 
 *IN DEVELOPMENT*
 
 Expect plenty of breaking changes -- [semver](https://semver.org/) will be
-respected. This isn't currently ready to be relied upon by other modules!
+respected though.
 
 If you're interested in this project, leave an issue and share a bit about what
-you're building!
+you're building & how we might collaborate!
 
 ## Usage
 
@@ -36,9 +42,10 @@ var node = {
 
 osm.create(node, function (err, node) {
   if (err) return console.error(err)
+
   console.log('created node with id', node.id)
-  var bbox = [1,-13,2,-11]
-  osm.query(bbox, function (err, nodes) {
+
+  osm.query([1,-13,2,-11], function (err, nodes) {
     if (err) console.error(err)
     else console.log(nodes)
   })
@@ -85,14 +92,20 @@ callback `cb`.
 
 ### osm.get(id, cb)
 
-Fetch all of the newest OSM elements with the ID `id`. In the case that multiple
-peers modified an element prior to sync'ing with each other, there may be
-multiple latest elements ("heads") for the ID.
+Fetch all of the newest OSM elements with the ID `id`. `cb` is called with an
+array of OSM elements.
+
+The reason an array is returned is because of the distributed nature of the
+database: in the case that multiple peers modify an element prior to sync'ing
+their databases with each other, there would be multiple latest elements
+("heads") for that ID.
 
 ### osm.getByVersion(version[, opts], cb)
 
 Fetch a specific OSM element by its version string. Returns `null` if not found,
 otherwise the single element.
+
+**TODO**: ugh, we need to get rid of this "raw" business and osm/element type data
 
 If `opts.raw` is set, the underlying message is returned, which wraps the
 element. It looks like
@@ -118,27 +131,29 @@ Update an existing element with ID `id` to be the OSM element `element`. The new
 element should have all fields that the OSM element would have. The `type` of
 the element cannot be changed.
 
-If the value of ID currently returns two or more elements, this new value will
-replace them all.
-
-The only valid `opts` right now is `opts.links`: an array of version strings of
-elements that are to be replaced by this one.
+Updates work by replacing old heads (latest versions) with a new version. This
+works by "linking" back to the version names of all previous heads you want to
+replace. This happens automatically, but if an array of versions are passed
+into `opts.links`, those elements will be replaced with this newer version
+instead of the default current heads.
 
 `cb` is called with the new element, including `id` and `version` properties.
 
 ### osm.del(id, value, cb)
 
-Marks the element `id` as deleted. A deleted document can be `get` and
-`getByVersion`'d like a normal document, and will always have the `{ deleted:
-true }` field set.
+Marks the element `id` as deleted. Since all data is append-only in the
+database, this does not actually delete data, but instead writes a brand new
+version of the document with `{ deleted: true }` set on it.
+
+TODO: explain why one needs to pass in `element` still & what that means
 
 Deleted ways, nodes, and relations are all still returned by the `query` API.
 The nodes of a deleted way are not included in the results.
 
 ### osm.batch(ops, cb)
 
-Create and update many elements atomically. `ops` is an array of objects
-describing the elements to be added or updated.
+Create and update many elements atomically. `ops` is an array of operations
+(objects) describing the elements to be added or updated or deleted.
 
 ```js
 {
@@ -158,24 +173,24 @@ while a type of`'del'` will mark the element as deleted.
 Currently, doing a batch insert skips many validation checks in order to be as
 fast as possible.
 
-*TODO: accept `opts.validate` or `opts.strict`*
+*TODO: means to enable validation + error reporting / atomic write*
 
 ### var rs = osm.query(bbox[, cb])
 
-Retrieves all `node`s, `way`s, and `relation`s touching the bounding box `bbox`.
+Retrieves all nodes, ways, and relations within the bounding box `bbox`.
 
-`bbox` is expected to be of the format `[WEST, SOUTH, EAST, NORTH]`.
-Latitude (north/south) runs between `(-85, 85)`, and longitude (west/east) between `(-180, 180)`.
+`bbox` is expected to be an array of the form `[WEST, SOUTH, EAST, NORTH]`.
+Latitude (north/south) runs between `(-85, 85)`, and longitude (west/east)
+between `(-180, 180)`.
 
-A callback parameter `cb` is optional. If given, it will be called as
-`cb(err, elements)`. If not provided or set to `null`, a Readable stream will be
-returned that can be read from as elements are emitted. The distinction between
-the two is that the callback will buffer all results before they are returned,
-but the stream will emit results as they arrive, resulting in much less
-buffering. This can make a large impact on memory use for queries on large
-datasets.
+A callback parameter `cb` is optional. If given, it will be called as `cb(err,
+elements)`. If not provided, a Readable stream will be returned that can be
+read from as elements are emitted. The distinction between the two is that the
+callback will buffer all results before they are returned, but the stream will
+emit results as they arrive, resulting in much less buffering. This can make a
+large impact on memory use for queries on large datasets.
 
-The following [algorithm](https://wiki.openstreetmap.org/wiki/API_v0.6#Retrieving_map_data_by_bounding_box:_GET_.2Fapi.2F0.6.2Fmap) is used to determine what OSM elements are returned:
+Elements are returned as governed by the [query algorithm outlined by the OSM v0.6 API](https://wiki.openstreetmap.org/wiki/API_v0.6#Retrieving_map_data_by_bounding_box:_GET_.2Fapi.2F0.6.2Fmap):
 
 1. All nodes that are inside a given bounding box and any relations that
    reference them.
@@ -189,8 +204,14 @@ The following [algorithm](https://wiki.openstreetmap.org/wiki/API_v0.6#Retrievin
 
 ### var rs = osm.refs(id[, cb])
 
-Fetch a list of all OSM elements that refer to the id `id`. This will capture
-referrals by changeset, way membership, or relation membership.
+Fetch a list of all OSM elements that refer to the element with ID `id`. This
+captures
+
+1. elements with a `changeset` field
+2. all nodes referenced by a way's `nodes` field
+3. all nodes, ways, and relations referenced by a relation's `members` field
+
+**TODO**: this could be made clearer -- maybe an example?
 
 A callback parameter `cb` is optional. If given, it will be called as `cb(err,
 results)`. If not provided or set to `null`, a Readable stream will be returned
@@ -211,13 +232,17 @@ Return a readable stream `r` of all the documents in the db sorted by
 `timestamp` or `created_at` (for observations). By default, returns least recent
 documents first.
 
-* `opts.type` - additionally filter results by type as a string
-* `opts.id` - only show results for a single string id
-* `opts.reverse` - when `true`, provide results from most to least recent
-* `opts.lt`, `opts.lte`, `opts.gt`, `opts.gte` - lexicographic sorting options
+The following options are accepted via the `opts` parameter:
 
-There is a separate index for filtering by type and id each, so queries should
-be fast. Filtering by id or type are exclusive options.
+* `opts.type`(boolean)  - additionally filter results by type as a string
+* `opts.id` (boolean) - only show results for a single string id
+* `opts.reverse` (boolean) - when `true`, provide results from most to least recent
+* `opts.lt`, `opts.lte`, `opts.gt`, `opts.gte` (string) - lexicographic sorting options
+
+**TODO**: clarify how lt/lte/gt/gte work
+
+There is a separate index for filtering by type and ID each, so queries should
+be fast. *Filtering by ID or type are exclusive options.*
 
 The lexicographic sorting options operate on `timestamp`/`created_at` keys which
 are in ISO 8601 format, as you could get from `.toISOString()`:
@@ -229,10 +254,9 @@ are in ISO 8601 format, as you could get from `.toISOString()`:
 
 ### osm.on('error', function (err) {})
 
-Event emitted when an error within kappa-core has occurred. This is very
+Event emitted when an error within kappa-osm has occurred. This is very
 important to listen on, lest things suddenly seem to break and it's not
 immediately clear why.
-
 
 ## Architecture
 
