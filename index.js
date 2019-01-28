@@ -3,7 +3,6 @@ module.exports = Osm
 var sub = require('subleveldown')
 var utils = require('./lib/utils')
 var once = require('once')
-var xtend = require('xtend')
 var uniq = require('uniq')
 var EventEmitter = require('events').EventEmitter
 var through = require('through2')
@@ -175,7 +174,7 @@ Osm.prototype.put = function (id, element, opts, cb) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') +
           '@' + (self.writer.length - 1)
-        var elm = xtend(element, { id: id, version: version })
+        var elm = Object.assign(element, { id: id, version: version })
         cb(null, elm)
       })
     })
@@ -204,7 +203,7 @@ Osm.prototype.del = function (id, element, opts, cb) {
       var doc = {
         type: 'osm/element',
         id: id,
-        element: xtend({deleted: true}, element),
+        element: Object.assign({deleted: true}, element),
         links: links
       }
       if (refs.refs) doc.element.refs = refs.refs
@@ -251,7 +250,7 @@ Osm.prototype.del = function (id, element, opts, cb) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') +
           '@' + (self.writer.length - 1)
-        var elm = xtend(element, { id: id, version: version })
+        var elm = Object.assign(element, { id: id, version: version })
         cb(null, elm)
       })
     })
@@ -318,7 +317,7 @@ Osm.prototype.batch = function (ops, cb) {
         if (err) return cb(err)
         var res = batch.map(function (doc, n) {
           var version = key + '@' + (startSeq + n)
-          return xtend(doc.element, {
+          return Object.assign(doc.element, {
             id: doc.id,
             version: version
           })
@@ -352,7 +351,7 @@ Osm.prototype.batch = function (ops, cb) {
       return {
         type: 'osm/element',
         id: op.id,
-        element: xtend(op.value, { deleted: true }),
+        element: Object.assign(op.value, { deleted: true }),
         links: op.links
       }
     } else {
