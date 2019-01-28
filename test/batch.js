@@ -135,16 +135,17 @@ test('create + delete nodes', function (t) {
       t.equals(elms.length, 2)
       t.notEqual(elms[0].version, elmVersion)
       delete elms[0].version
-      t.deepEquals(elms[0], { id: elmId, deleted: true, changeset: '10' })
+      t.deepEquals(elms[0], { id: elmId, deleted: true, changeset: '10', links: [elmVersion] })
       clearIdVersion(elms[1])
-      t.deepEquals(elms[1], { type: 'node', changeset: '8', lat: '0', lon: '0' })
+      t.deepEquals(elms[1], { type: 'node', changeset: '8', lat: '0', lon: '0', links: [] })
 
       db.get(elmId, function (err, elms) {
         t.error(err)
+        console.log('elms', elms)
         t.equals(elms.length, 1)
         t.notEqual(elms[0].version, elmVersion)
         delete elms[0].version
-        t.deepEquals(elms[0], { id: elmId, deleted: true, changeset: '10' })
+        t.deepEquals(elms[0], { id: elmId, deleted: true, changeset: '10', links: [elmVersion] })
       })
     })
   })
