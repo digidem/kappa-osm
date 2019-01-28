@@ -432,7 +432,7 @@ Osm.prototype._getRefsMembersById = function (id, cb) {
 // [OsmVersion] -> {refs: [OsmId]} | {members: [OsmId]} | {}
 Osm.prototype._getRefsMembersByVersions = function (versions, cb) {
   var self = this
-  if (!versions.length) return cb(null, [])
+  if (!versions.length) return process.nextTick(cb, null, [])
 
   var elms = []
   var error
