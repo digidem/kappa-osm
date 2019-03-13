@@ -256,6 +256,10 @@ are in ISO 8601 format, as you could get from `.toISOString()`:
 '2018-09-14T23:07:53.862Z'
 ```
 
+### var t = osm.byType(type)
+
+Returns a readable stream `t` of all documents in the database of type `type`. Only the latest documents are returned, not historic data.
+
 ### osm.on('error', function (err) {})
 
 Event emitted when an error within kappa-osm has occurred. This is very

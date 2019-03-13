@@ -13,6 +13,7 @@ var umkv = require('unordered-materialized-kv')
 var checkElement = require('./lib/check-element')
 var createRefsIndex = require('./lib/refs-index.js')
 var createChangesetIndex = require('./lib/changeset-index.js')
+var createTypesIndex = require('./lib/types-index.js')
 var createKvIndex = require('./lib/kv-index.js')
 var createBkdIndex = require('./lib/bkd-index.js')
 var createHistoryIndex = require('./lib/history-index.js')
@@ -50,6 +51,7 @@ function Osm (opts) {
   this.core.use('changeset', 1, createChangesetIndex(sub(this.index, 'ch')))
   this.core.use('geo', 1, bkd)
   this.core.use('history', 1, createHistoryIndex(this, sub(this.index, 'h')))
+  this.core.use('types', 1, createTypesIndex(sub(this.index, 't')))
 }
 Osm.prototype = Object.create(EventEmitter.prototype)
 
@@ -373,6 +375,23 @@ Osm.prototype.refs = function (id, cb) {
   this.core.api.refs.ready(function () {
     self.core.api.refs.get(id, cb)
   })
+}
+
+Osm.prototype.byType = function (type) {
+  var self = this
+
+  var fetch = through.obj(function (row, _, next) {
+    self._getByVersion(row.version, function (err, elm) {
+      if (err) return next(err)
+      var res = Object.assign(elm.element, {
+        version: row.version,
+        id: row.id
+      })
+      next(null, res)
+    })
+  })
+
+  return pumpify.obj(this.core.api.types.createReadStream(type), fetch)
 }
 
 // BoundingBox -> (Stream or Callback)
