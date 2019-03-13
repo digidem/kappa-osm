@@ -7,6 +7,7 @@ var xtend = require('xtend')
 var uniq = require('uniq')
 var EventEmitter = require('events').EventEmitter
 var through = require('through2')
+var pumpify = require('pumpify')
 
 var umkv = require('unordered-materialized-kv')
 var checkElement = require('./lib/check-element')
@@ -381,7 +382,21 @@ Osm.prototype.query = function (bbox, opts, cb) {
     opts = {}
   }
   opts = opts || {}
-  return this.core.api.geo.query(bbox, opts, cb)
+
+  var filter = through.obj(function (row, _, next) {
+    if (!row || !row.element || !row.element.type) return next()
+    if (!opts.observations) {
+      var type = row.element.type
+      if (type !== 'node' && type !== 'way' && type !== 'relation') return next()
+    }
+    next(null, row)
+  })
+
+  var stream = this.core.api.geo.query(bbox, opts, cb)
+  if (stream instanceof Error) return process.nextTick(stream)
+  var res = pumpify.obj(stream, filter)
+
+  return res
 }
 
 Osm.prototype.createReplicationStream = function (opts) {
