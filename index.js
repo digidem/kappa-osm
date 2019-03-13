@@ -377,7 +377,8 @@ Osm.prototype.refs = function (id, cb) {
   })
 }
 
-Osm.prototype.byType = function (type) {
+Osm.prototype.byType = function (type, opts) {
+  opts = opts || {}
   var self = this
 
   var fetch = through.obj(function (row, _, next) {
@@ -391,7 +392,10 @@ Osm.prototype.byType = function (type) {
     })
   })
 
-  return pumpify.obj(this.core.api.types.createReadStream(type), fetch)
+  var ropts = {}
+  if (opts.limit) ropts.limit = opts.limit
+
+  return pumpify.obj(this.core.api.types.createReadStream(type, ropts), fetch)
 }
 
 // BoundingBox -> (Stream or Callback)
