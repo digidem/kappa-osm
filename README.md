@@ -175,7 +175,7 @@ fast as possible.
 
 *TODO: means to enable validation + error reporting / atomic write*
 
-### var rs = osm.query(bbox[, cb])
+### var rs = osm.query(bbox[, opts] [, cb])
 
 Retrieves all nodes, ways, and relations within the bounding box `bbox`.
 
@@ -201,6 +201,10 @@ Elements are returned as governed by the [query algorithm outlined by the OSM v0
    to the above rules. (This does not apply recursively; meaning that elements
    referenced by a relation are not returned by virtue of being in that
    relation.)
+
+Accepted `opts` include:
+
+- `opts.observations` (boolean): whether to include `type === 'observation'` objects as well as regular OSM types.
 
 ### var rs = osm.refs(id[, cb])
 
