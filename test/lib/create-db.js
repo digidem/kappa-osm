@@ -1,16 +1,19 @@
 var kappa = require('kappa-core')
 var Osm = require('../..')
 var ram = require('random-access-memory')
-var memdb = require('memdb')
+var level = require('level')
+var tmp = require('os').tmpdir()
+var path = require('path')
 
 module.exports = createOne
 module.exports.two = createTwo
 
 function createOne () {
   var core = kappa(ram, { valueEncoding: 'json' })
+  var dir = path.join(tmp, 'kappa-osm-' + String(Math.random()).substring(10))
   return Osm({
     core: core,
-    index: memdb(),
+    index: level(dir),
     storage: function (name, cb) { cb(null, ram()) }
   })
 }
