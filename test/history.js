@@ -12,7 +12,8 @@ test('get all docs ordered by date', function (t) {
         type: 'node',
         lat: '3',
         lon: '4',
-        timestamp: '2018-09-01T00:00:00.000Z'
+        timestamp: '2018-09-01T00:00:00.000Z',
+        links: []
       }
     },
     {
@@ -21,7 +22,8 @@ test('get all docs ordered by date', function (t) {
         type: 'node',
         lat: '1',
         lon: '2',
-        timestamp: '2017-12-01T00:00:00.000Z'
+        timestamp: '2017-12-01T00:00:00.000Z',
+        links: []
       }
     },
     {
@@ -30,7 +32,8 @@ test('get all docs ordered by date', function (t) {
         type: 'node',
         lat: '5',
         lon: '6',
-        timestamp: '2019-08-01T00:00:00.000Z'
+        timestamp: '2019-08-01T00:00:00.000Z',
+        links: []
       }
     }
   ]
@@ -45,7 +48,8 @@ test('get all docs ordered by date', function (t) {
           lon: '2',
           timestamp: '2017-12-01T00:00:00.000Z',
           id: res[1].id,
-          version: res[1].version
+          version: res[1].version,
+          links: []
         },
         {
           type: 'node',
@@ -53,7 +57,8 @@ test('get all docs ordered by date', function (t) {
           lon: '4',
           timestamp: '2018-09-01T00:00:00.000Z',
           id: res[0].id,
-          version: res[0].version
+          version: res[0].version,
+          links: []
         },
         {
           type: 'node',
@@ -61,7 +66,8 @@ test('get all docs ordered by date', function (t) {
           lon: '6',
           timestamp: '2019-08-01T00:00:00.000Z',
           id: res[2].id,
-          version: res[2].version
+          version: res[2].version,
+          links: []
         }
       ])
       t.end()
@@ -79,7 +85,8 @@ test('get all docs by type ordered by date', function (t) {
         type: 'node',
         lat: '3',
         lon: '4',
-        timestamp: '2018-09-01T00:00:00.000Z'
+        timestamp: '2018-09-01T00:00:00.000Z',
+        links: []
       }
     },
     {
@@ -88,14 +95,16 @@ test('get all docs by type ordered by date', function (t) {
         type: 'node',
         lat: '1',
         lon: '2',
-        timestamp: '2017-12-01T00:00:00.000Z'
+        timestamp: '2017-12-01T00:00:00.000Z',
+        links: []
       }
     },
     {
       type: 'put',
       value: {
         type: 'way',
-        timestamp: '2018-04-01T00:00:00.000Z'
+        timestamp: '2018-04-01T00:00:00.000Z',
+        links: []
       }
     },
     {
@@ -104,7 +113,8 @@ test('get all docs by type ordered by date', function (t) {
         type: 'node',
         lat: '5',
         lon: '6',
-        timestamp: '2019-08-01T00:00:00.000Z'
+        timestamp: '2019-08-01T00:00:00.000Z',
+        links: []
       }
     }
   ]
@@ -119,7 +129,8 @@ test('get all docs by type ordered by date', function (t) {
           lon: '2',
           timestamp: '2017-12-01T00:00:00.000Z',
           id: res[1].id,
-          version: res[1].version
+          version: res[1].version,
+          links: []
         },
         {
           type: 'node',
@@ -127,7 +138,8 @@ test('get all docs by type ordered by date', function (t) {
           lon: '4',
           timestamp: '2018-09-01T00:00:00.000Z',
           id: res[0].id,
-          version: res[0].version
+          version: res[0].version,
+          links: []
         },
         {
           type: 'node',
@@ -135,7 +147,8 @@ test('get all docs by type ordered by date', function (t) {
           lon: '6',
           timestamp: '2019-08-01T00:00:00.000Z',
           id: res[3].id,
-          version: res[3].version
+          version: res[3].version,
+          links: []
         }
       ])
     })
@@ -146,7 +159,8 @@ test('get all docs by type ordered by date', function (t) {
           type: 'way',
           timestamp: '2018-04-01T00:00:00.000Z',
           id: res[2].id,
-          version: res[2].version
+          version: res[2].version,
+          links: []
         }
       ])
     })
@@ -195,19 +209,22 @@ test('observation history', function (t) {
           type: 'observation',
           created_at: '2017-12-01T00:00:00.000Z',
           id: res[1].id,
-          version: res[1].version
+          version: res[1].version,
+          links: []
         },
         {
           type: 'observation',
           created_at: '2018-09-01T00:00:00.000Z',
           id: res[0].id,
-          version: res[0].version
+          version: res[0].version,
+          links: []
         },
         {
           type: 'observation',
           created_at: '2019-08-01T00:00:00.000Z',
           id: res[3].id,
-          version: res[3].version
+          version: res[3].version,
+          links: []
         }
       ])
       t.end()
@@ -257,19 +274,22 @@ test('reverse observation history', function (t) {
           type: 'observation',
           created_at: '2019-08-01T00:00:00.000Z',
           id: res[3].id,
-          version: res[3].version
+          version: res[3].version,
+          links: []
         },
         {
           type: 'observation',
           created_at: '2018-09-01T00:00:00.000Z',
           id: res[0].id,
-          version: res[0].version
+          version: res[0].version,
+          links: []
         },
         {
           type: 'observation',
           created_at: '2017-12-01T00:00:00.000Z',
           id: res[1].id,
-          version: res[1].version
+          version: res[1].version,
+          links: []
         }
       ])
       t.end()
@@ -371,7 +391,8 @@ test('get history by id', function (t) {
           lat: '3.01',
           lon: '4.01',
           timestamp: '2017-09-01T00:00:00.000Z',
-          version: results[3][0].version
+          version: results[3][0].version,
+          links: [results[2][0].version]
         },
         {
           type: 'node',
@@ -379,7 +400,8 @@ test('get history by id', function (t) {
           lat: '3',
           lon: '4',
           timestamp: '2018-09-01T00:00:00.000Z',
-          version: results[0][0].version
+          version: results[0][0].version,
+          links: []
         },
         {
           type: 'node',
@@ -387,7 +409,8 @@ test('get history by id', function (t) {
           lat: '3.3',
           lon: '4.4',
           timestamp: '2018-09-01T01:00:00.000Z',
-          version: results[1][0].version
+          version: results[1][0].version,
+          links: [results[0][0].version]
         },
         {
           type: 'node',
@@ -395,7 +418,8 @@ test('get history by id', function (t) {
           lat: '3.33',
           lon: '4.44',
           timestamp: '2018-09-01T02:00:00.000Z',
-          version: results[2][0].version
+          version: results[2][0].version,
+          links: [results[1][0].version]
         }
       ])
     })
@@ -408,7 +432,8 @@ test('get history by id', function (t) {
           lat: '1',
           lon: '2',
           timestamp: '2017-12-01T00:00:00.000Z',
-          version: results[0][1].version
+          version: results[0][1].version,
+          links: []
         },
         {
           type: 'node',
@@ -416,7 +441,8 @@ test('get history by id', function (t) {
           lat: '1.11',
           lon: '2.22',
           timestamp: '2017-12-01T01:00:00.000Z',
-          version: results[2][1].version
+          version: results[2][1].version,
+          links: [results[0][1].version]
         }
       ])
     })

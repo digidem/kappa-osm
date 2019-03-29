@@ -330,7 +330,7 @@ test.skip('opts.type: results sorted by type', function (t) {
 
     db.query(bbox, { order: 'type' }, function (err, nodes) {
       t.error(err, 'no error on cb query')
-      var res = nodes.map(function (node) { return node.element })
+      var res = nodes.map(function (node) { return node })
       t.equals(res.length, 5)
       t.equals(res[0].type, 'node')
       t.equals(res[1].type, 'node')
@@ -342,7 +342,7 @@ test.skip('opts.type: results sorted by type', function (t) {
 
     collect(db.query(bbox, { order: 'type' }), function (err, nodes) {
       t.error(err, 'no error on streaming query')
-      var res = nodes.map(function (node) { return node.element })
+      var res = nodes.map(function (node) { return node })
       t.equals(res.length, 5)
       t.equals(res[0].type, 'node')
       t.equals(res[1].type, 'node')
@@ -379,7 +379,7 @@ test('return only latest version of a modified node', function (t) {
         t.error(err)
         t.equals(res.length, 1)
         t.equals(res[0].id, 'A')
-        t.deepEquals(res[0].element.tags, { foo: 'bar' })
+        t.deepEquals(res[0].tags, { foo: 'bar' })
         t.end()
       })
     })
@@ -431,7 +431,7 @@ test('return only latest way that references a node', function (t) {
         t.deepEquals(ids, [ 'A', 'B', 'C', 'D' ])
         var ways = res.filter(function (elm) { return elm.id === 'D' })
         t.equals(ways.length, 1)
-        t.deepEquals(ways[0].element.tags, { foo: 'bar' })
+        t.deepEquals(ways[0].tags, { foo: 'bar' })
         t.end()
       })
     })
@@ -508,7 +508,7 @@ test('deleted node of a way', function (t) {
         res.sort(cmpId)
         var ids = res.map(e => e.id)
         t.deepEquals(ids, ['A', 'B', 'C', 'D'])
-        t.equals(res[1].element.deleted, true)
+        t.equals(res[1].deleted, true)
         t.end()
       })
     })

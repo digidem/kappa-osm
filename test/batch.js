@@ -141,7 +141,6 @@ test('create + delete nodes', function (t) {
 
       db.get(elmId, function (err, elms) {
         t.error(err)
-        console.log('elms', elms)
         t.equals(elms.length, 1)
         t.notEqual(elms[0].version, elmVersion)
         delete elms[0].version

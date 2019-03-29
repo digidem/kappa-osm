@@ -158,7 +158,7 @@ test('update bad nodes', function (t) {
 })
 
 test('soft delete a node', function (t) {
-  t.plan(6)
+  t.plan(7)
 
   var db = createDb()
 
@@ -188,6 +188,8 @@ test('soft delete a node', function (t) {
         delete elms[0].id
         delete elms[0].version
         delete elms[0].timestamp
+        t.deepEquals(elms[0].links, [elm.version])
+        delete elms[0].links
         t.deepEquals(elms[0], nodeDeletion)
       })
     })
@@ -211,11 +213,10 @@ test('version lookup correctness', function (t) {
         t.error(err)
         t.equals(elm1.id, elm3.id)
         t.equals(elm1.version, elm3.version)
-        db.getByVersion(elm2.version, { raw: true }, function (err, msg) {
-          var elm4 = msg.element
+        db.getByVersion(elm2.version, { raw: true }, function (err, elm4) {
           t.error(err)
-          t.equals(msg.id, elm2.id)
-          t.deepEquals(msg.links, [elm1.version])
+          t.equals(elm4.id, elm2.id)
+          t.deepEquals(elm4.links, [elm1.version])
           t.deepEquals(elm4.tags, { foo: 'bar' })
           t.end()
         })
