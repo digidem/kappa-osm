@@ -234,6 +234,7 @@ Osm.prototype.del = function (id, element, opts, cb) {
   // write to the feed
   function write (doc, cb) {
     self._ready(function () {
+      doc.id = id
       self.writer.append(doc, function (err) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') +
@@ -362,7 +363,7 @@ Osm.prototype.byType = function (type, opts) {
   var fetch = through.obj(function (row, _, next) {
     self._getByVersion(row.version, function (err, elm) {
       if (err) return next(err)
-      var res = Object.assign(elm.element, {
+      var res = Object.assign(elm, {
         version: row.version,
         id: row.id
       })
@@ -385,9 +386,9 @@ Osm.prototype.query = function (bbox, opts, cb) {
   opts = opts || {}
 
   var filter = through.obj(function (row, _, next) {
-    if (!row || !row.element || !row.element.type) return next()
+    if (!row || !row.type) return next()
     if (!opts.observations) {
-      var type = row.element.type
+      var type = row.type
       if (type !== 'node' && type !== 'way' && type !== 'relation') return next()
     }
     next(null, row)
