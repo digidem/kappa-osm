@@ -280,3 +280,4 @@ $ npm install kappa-osm
 ## License
 
 ISC
+
