@@ -159,8 +159,7 @@ Create and update many elements atomically. `ops` is an array of operations
 {
   type: 'put|del',
   id: 'id',
-  value: { /* element */ },
-  links: [version0, version1, ...]
+  value: { /* element */ }
 }
 ```
 
@@ -281,3 +280,4 @@ $ npm install kappa-osm
 ## License
 
 ISC
+

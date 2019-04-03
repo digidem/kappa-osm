@@ -56,23 +56,28 @@ test('ref update', function (t) {
         t.error(err)
         t.deepEqual(sortLinks(res).sort(idcmp), [
           {
-            type: 'osm/element',
             id: 'A',
-            element: { type: 'node', lat: '64.5', lon: '-147.3', changeset: '15' },
+            type: 'node',
+            lat: '64.5',
+            lon: '-147.3',
+            changeset: '15',
             links: [],
             version: versions.A[0]
           },
           {
-            type: 'osm/element',
             id: 'B',
-            element: { type: 'node', lat: '63.9', lon: '-147.6', changeset: '15' },
+            type: 'node',
+            lat: '63.9',
+            lon: '-147.6',
+            changeset: '15',
             links: [],
             version: versions.B[0]
           },
           {
-            type: 'osm/element',
             id: 'D',
-            element: { type: 'way', refs: ['A', 'B'], changeset: '16' },
+            type: 'way',
+            refs: ['A', 'B'],
+            changeset: '16',
             links: [ versions.D[0] ],
             version: versions.D[1]
           }

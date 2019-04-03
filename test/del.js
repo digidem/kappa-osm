@@ -25,7 +25,8 @@ test('delete', function (t) {
             deleted: true,
             changeset: '10',
             id: elm.id,
-            version: elms[0].version
+            version: elms[0].version,
+            links: [elm.version]
           }
         ]
         t.deepEquals(elms, expected)

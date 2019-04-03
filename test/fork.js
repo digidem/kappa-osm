@@ -41,62 +41,47 @@ test('2-peer node fork', function (t) {
       var q0 = [-148, 63, -146, 65]
       var ex0 = [
         {
-          type: 'osm/element',
           id: 'A',
           links: [],
-          element: {
-            type: 'node',
-            lat: '64.5',
-            lon: '-147.3',
-            changeset: '15'
-          },
+          type: 'node',
+          lat: '64.5',
+          lon: '-147.3',
+          changeset: '15',
           version: versions.A[0]
         },
         {
-          type: 'osm/element',
           id: 'B',
           links: [],
-          element: {
-            type: 'node',
-            lat: '63.9',
-            lon: '-147.6',
-            changeset: '15'
-          },
+          type: 'node',
+          lat: '63.9',
+          lon: '-147.6',
+          changeset: '15',
           version: versions.B[0]
         },
         {
-          type: 'osm/element',
           id: 'C',
           links: [versions.C[0]],
-          element: {
-            type: 'node',
-            lat: '62.5',
-            lon: '-146.2',
-            changeset: '14'
-          },
+          type: 'node',
+          lat: '62.5',
+          lon: '-146.2',
+          changeset: '14',
           version: versions.C[1]
         },
         {
-          type: 'osm/element',
           id: 'C',
           links: [versions.C[0]],
-          element: {
-            type: 'node',
-            lat: '62.4',
-            lon: '-146.3',
-            changeset: '16'
-          },
+          type: 'node',
+          lat: '62.4',
+          lon: '-146.3',
+          changeset: '16',
           version: versions.C[2]
         },
         {
-          type: 'osm/element',
           id: 'D',
           links: [],
-          element: {
-            type: 'way',
-            refs: [ 'A', 'B', 'C' ],
-            changeset: '15'
-          },
+          type: 'way',
+          refs: [ 'A', 'B', 'C' ],
+          changeset: '15',
           version: versions.D[0]
         }
       ].sort(idcmp)
@@ -113,62 +98,47 @@ test('2-peer node fork', function (t) {
       var q1 = [-149.5, 62, -146, 64]
       var ex1 = [
         {
-          type: 'osm/element',
           id: 'A',
           links: [],
-          element: {
-            type: 'node',
-            lat: '64.5',
-            lon: '-147.3',
-            changeset: '15'
-          },
+          type: 'node',
+          lat: '64.5',
+          lon: '-147.3',
+          changeset: '15',
           version: versions.A[0]
         },
         {
-          type: 'osm/element',
           id: 'B',
           links: [],
-          element: {
-            type: 'node',
-            lat: '63.9',
-            lon: '-147.6',
-            changeset: '15'
-          },
+          type: 'node',
+          lat: '63.9',
+          lon: '-147.6',
+          changeset: '15',
           version: versions.B[0]
         },
         {
-          type: 'osm/element',
           id: 'C',
           links: [versions.C[0]],
-          element: {
-            type: 'node',
-            lat: '62.5',
-            lon: '-146.2',
-            changeset: '14'
-          },
+          type: 'node',
+          lat: '62.5',
+          lon: '-146.2',
+          changeset: '14',
           version: versions.C[1]
         },
         {
-          type: 'osm/element',
           id: 'C',
           links: [versions.C[0]],
-          element: {
-            type: 'node',
-            lat: '62.4',
-            lon: '-146.3',
-            changeset: '16'
-          },
+          type: 'node',
+          lat: '62.4',
+          lon: '-146.3',
+          changeset: '16',
           version: versions.C[2]
         },
         {
-          type: 'osm/element',
           id: 'D',
-          links: [],
-          element: {
-            type: 'way',
-            refs: [ 'A', 'B', 'C' ],
-            changeset: '15'
-          },
+        links: [],
+          type: 'way',
+          refs: [ 'A', 'B', 'C' ],
+          changeset: '15',
           version: versions.D[0]
         }
       ].sort(idcmp)
@@ -232,49 +202,37 @@ test('2-peer deletion of forked nodes', function (t) {
       var q0 = [-148, 63, -146, 65]
       var ex0 = [
         {
-          type: 'osm/element',
           id: 'A',
           links: [],
-          element: {
-            type: 'node',
-            lat: '64.5',
-            lon: '-147.3',
-            changeset: '15'
-          },
+          type: 'node',
+          lat: '64.5',
+          lon: '-147.3',
+          changeset: '15',
           version: versions.A[0]
         },
         {
-          type: 'osm/element',
           id: 'B',
           links: [],
-          element: {
-            type: 'node',
-            lat: '63.9',
-            lon: '-147.6',
-            changeset: '15'
-          },
+          type: 'node',
+          lat: '63.9',
+          lon: '-147.6',
+          changeset: '15',
           version: versions.B[0]
         },
         // C is here because it is referenced by D
         {
-          type: 'osm/element',
           id: 'C',
           links: [versions.C[1], versions.C[2]].sort(),
-          element: {
-            changeset: '19',
-            deleted: true
-          },
+          changeset: '19',
+          deleted: true,
           version: versions.C[3]
         },
         {
-          type: 'osm/element',
           id: 'D',
           links: [],
-          element: {
-            type: 'way',
-            refs: [ 'A', 'B', 'C' ],
-            changeset: '15'
-          },
+          type: 'way',
+          refs: [ 'A', 'B', 'C' ],
+          changeset: '15',
           version: versions.D[0]
         }
       ].sort(idcmp)
@@ -331,9 +289,7 @@ function sortLinks (rows) {
 
 function rmTimestamp (nodes) {
   return nodes.map(function (node) {
-    node = Object.assign({}, node)
-    node.element = Object.assign({}, node.element)
-    delete node.element.timestamp
+    delete node.timestamp
     return node
   })
 }

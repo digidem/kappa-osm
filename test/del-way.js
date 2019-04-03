@@ -35,7 +35,7 @@ test('delete a way (with changesets)', function (t) {
       docs.forEach(function (doc) {
         versions[doc.id].push(doc.version)
       })
-      batch1[0].links = [versions.D[0]]
+      batch1[0].value.links = [versions.D[0]]
       osm1.batch(batch1, function (err, docs) {
         t.error(err)
         docs.forEach(function (doc) {
@@ -50,25 +50,31 @@ test('delete a way (with changesets)', function (t) {
         t.error(err)
         t.deepEqual(sortLinks(res).sort(idcmp), [
           {
-            type: 'osm/element',
             id: 'A',
-            element: { type: 'node', lat: '64.5', lon: '-147.3', changeset: '15' },
-            links: [],
-            version: versions.A[0]
+            version: versions.A[0],
+            type: 'node',
+            lat: '64.5',
+            lon: '-147.3',
+            changeset: '15',
+            links: []
           },
           {
-            type: 'osm/element',
             id: 'B',
-            element: { type: 'node', lat: '63.9', lon: '-147.6', changeset: '15' },
-            links: [],
-            version: versions.B[0]
+            version: versions.B[0],
+            type: 'node',
+            lat: '63.9',
+            lon: '-147.6',
+            changeset: '15',
+            links: []
           },
           {
-            type: 'osm/element',
             id: 'C',
-            element: { type: 'node', lat: '64.2', lon: '-146.5', changeset: '15' },
-            links: [],
-            version: versions.C[0]
+            version: versions.C[0],
+            type: 'node',
+            lat: '64.2',
+            lon: '-146.5',
+            changeset: '15',
+            links: []
           }
         ])
       })

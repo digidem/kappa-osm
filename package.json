@@ -43,8 +43,7 @@
     "unordered-materialized-backrefs": "^1.0.1",
     "unordered-materialized-bkd": "^1.1.1",
     "unordered-materialized-kv": "^1.2.0",
-    "varint": "^5.0.0",
-    "xtend": "^4.0.1"
+    "varint": "^5.0.0"
   },
   "devDependencies": {
     "kappa-core": "^2.6.2",

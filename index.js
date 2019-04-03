@@ -3,7 +3,6 @@ module.exports = Osm
 var sub = require('subleveldown')
 var utils = require('./lib/utils')
 var once = require('once')
-var xtend = require('xtend')
 var uniq = require('uniq')
 var EventEmitter = require('events').EventEmitter
 var through = require('through2')
@@ -127,12 +126,9 @@ Osm.prototype.getByVersion = function (version, opts, cb) {
 
   this._getByVersion(version, function (err, doc) {
     if (err) return cb(err)
-    if (opts.raw) return cb(null, doc)
     if (!doc) return cb(null, null)
-    var elm = doc.element
-    elm.id = doc.id
-    elm.version = version
-    cb(null, elm)
+    doc = Object.assign({}, doc, { version: version })
+    cb(null, doc)
   })
 }
 
@@ -150,11 +146,7 @@ Osm.prototype.put = function (id, element, opts, cb) {
   var errs = checkElement(element, 'put')
   if (errs.length) return cb(errs[0])
 
-  var doc = {
-    type: 'osm/element',
-    id: id,
-    element: Object.assign({ timestamp: new Date().toISOString() }, element)
-  }
+  var doc = Object.assign({}, element, { id: id, timestamp: new Date().toISOString() })
 
   // set links
   if (opts.links) {
@@ -175,7 +167,7 @@ Osm.prototype.put = function (id, element, opts, cb) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') +
           '@' + (self.writer.length - 1)
-        var elm = xtend(element, { id: id, version: version })
+        var elm = Object.assign({}, element, { version: version, id: id })
         cb(null, elm)
       })
     })
@@ -201,14 +193,9 @@ Osm.prototype.del = function (id, element, opts, cb) {
     getElms(links, function (err, elms) {
       if (err) return cb(err)
       var refs = self._mergeElementRefsAndMembers(elms)
-      var doc = {
-        type: 'osm/element',
-        id: id,
-        element: xtend({deleted: true}, element),
-        links: links
-      }
-      if (refs.refs) doc.element.refs = refs.refs
-      else if (refs.members) doc.element.members = refs.members
+      var doc = Object.assign({}, element, { deleted: true, links: links })
+      if (refs.refs) doc.refs = refs.refs
+      else if (refs.members) doc.members = refs.members
       write(doc, cb)
     })
   })
@@ -247,11 +234,12 @@ Osm.prototype.del = function (id, element, opts, cb) {
   // write to the feed
   function write (doc, cb) {
     self._ready(function () {
+      doc.id = id
       self.writer.append(doc, function (err) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') +
           '@' + (self.writer.length - 1)
-        var elm = xtend(element, { id: id, version: version })
+        var elm = Object.assign({}, element, { id: id, version: version })
         cb(null, elm)
       })
     })
@@ -280,7 +268,7 @@ Osm.prototype.batch = function (ops, cb) {
     for (var i = 0; i < ops.length; i++) {
       if (ops[i].type === 'del') {
         pending++
-        updateRefs(ops[i].id, ops[i].links, ops[i].value, function (err) {
+        updateRefs(ops[i].id, ops[i].value.links || [], ops[i].value, function (err) {
           if (err) error = err
           if (!--pending) cb(error)
         })
@@ -294,12 +282,12 @@ Osm.prototype.batch = function (ops, cb) {
     for (var i = 0; i < ops.length; i++) {
       if (!ops[i].id) {
         ops[i].id = utils.generateId()
-        ops[i].links = []
-      } else if (!ops[i].links) {
+        ops[i].value.links = []
+      } else if (!ops[i].value.links) {
         pending++
         ;(function get (op) {
           self.core.api.kv.get(op.id, function (err, versions) {
-            op.links = versions || []
+            op.value.links = versions || []
             if (!--pending) cb(err)
           })
         })(ops[i])
@@ -311,6 +299,7 @@ Osm.prototype.batch = function (ops, cb) {
   function writeData (cb) {
     var batch = ops.map(osmOpToMsg)
 
+    var abc = Math.random()
     self._ready(function () {
       var key = self.writer.key.toString('hex')
       var startSeq = self.writer.length
@@ -318,7 +307,7 @@ Osm.prototype.batch = function (ops, cb) {
         if (err) return cb(err)
         var res = batch.map(function (doc, n) {
           var version = key + '@' + (startSeq + n)
-          return xtend(doc.element, {
+          return Object.assign({}, doc, {
             id: doc.id,
             version: version
           })
@@ -342,19 +331,9 @@ Osm.prototype.batch = function (ops, cb) {
 
   function osmOpToMsg (op) {
     if (op.type === 'put') {
-      return {
-        type: 'osm/element',
-        id: op.id,
-        element: op.value,
-        links: op.links
-      }
+      return Object.assign({}, op.value, { id: op.id })
     } else if (op.type === 'del') {
-      return {
-        type: 'osm/element',
-        id: op.id,
-        element: xtend(op.value, { deleted: true }),
-        links: op.links
-      }
+      return Object.assign({}, op.value, { id: op.id, deleted: true })
     } else {
       cb(new Error('unknown type'))
     }
@@ -384,7 +363,7 @@ Osm.prototype.byType = function (type, opts) {
   var fetch = through.obj(function (row, _, next) {
     self._getByVersion(row.version, function (err, elm) {
       if (err) return next(err)
-      var res = Object.assign(elm.element, {
+      var res = Object.assign(elm, {
         version: row.version,
         id: row.id
       })
@@ -407,9 +386,9 @@ Osm.prototype.query = function (bbox, opts, cb) {
   opts = opts || {}
 
   var filter = through.obj(function (row, _, next) {
-    if (!row || !row.element || !row.element.type) return next()
+    if (!row || !row.type) return next()
     if (!opts.observations) {
-      var type = row.element.type
+      var type = row.type
       if (type !== 'node' && type !== 'way' && type !== 'relation') return next()
     }
     next(null, row)
