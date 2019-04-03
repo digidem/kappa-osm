@@ -10,10 +10,9 @@ methods, internet and non (local wifi, USB keys, bluetooth, and more).
 
 ## Current Status
 
-*IN DEVELOPMENT*
+*MOSTLY STABLE*
 
-Expect plenty of breaking changes -- [semver](https://semver.org/) will be
-respected though.
+Several upstream modules are using this now, and are being integrated into "real" apps. Expect minimal breaking changes going forward.
 
 If you're interested in this project, leave an issue and share a bit about what
 you're building & how we might collaborate!
@@ -56,16 +55,18 @@ outputs
 
 ```
 created node with id 58261217205dc19b
-[ { type: 'osm/element',
+[
+  {
     id: '58261217205dc19b',
-    element:
-     { type: 'node',
-       lat: '-12.7',
-       lon: '1.3',
-       tags: { feature: 'water fountain' },
-       changeset: 'abcdef' },
+    type: 'node',
+    lat: '-12.7',
+    lon: '1.3',
+    tags: { feature: 'water fountain' },
+    changeset: 'abcdef' },
     links: [],
-    version: '366212350b5996f944df9df25e679a98545bdac98f507a06f493d167ff9d5f14@0' } ]
+    version: '366212350b5996f944df9df25e679a98545bdac98f507a06f493d167ff9d5f14@0'
+  }
+]
 ```
 
 ## API
@@ -105,26 +106,6 @@ their databases with each other, there would be multiple latest elements
 Fetch a specific OSM element by its version string. Returns `null` if not found,
 otherwise the single element.
 
-**TODO**: ugh, we need to get rid of this "raw" business and osm/element type data
-
-If `opts.raw` is set, the underlying message is returned, which wraps the
-element. It looks like
-
-```js
-{
-  type: 'osm/element',
-  id: 123567,
-  element: {
-    type: 'node',
-    lat: 14,
-    lon: 12,
-    changeset: '145',
-    tags: {}
-  },
-  links: [ 'versionA', 'versionB', ]
-}
-```
-
 ### osm.put(id, element, [opts, ]cb)
 
 Update an existing element with ID `id` to be the OSM element `element`. The new
@@ -144,8 +125,6 @@ instead of the default current heads.
 Marks the element `id` as deleted. Since all data is append-only in the
 database, this does not actually delete data, but instead writes a brand new
 version of the document with `{ deleted: true }` set on it.
-
-TODO: explain why one needs to pass in `element` still & what that means
 
 Deleted ways, nodes, and relations are all still returned by the `query` API.
 The nodes of a deleted way are not included in the results.
@@ -267,7 +246,24 @@ immediately clear why.
 
 ## Architecture
 
-*TODO: talk about forking data & forking architecture*
+### Document Format
+
+Documents (OSM elements, observations, etc) have a common format:
+
+```js
+  {
+    id: String,
+    type: String,
+    lat: String,
+    lon: String,
+    tags: Object,
+    changeset: String,
+    links: Array<String>,
+    version: String
+  }
+```
+
+**TODO**: talk about forking data & forking architecture*
 
 ## Install
 
