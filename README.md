@@ -101,6 +101,8 @@ database: in the case that multiple peers modify an element prior to sync'ing
 their databases with each other, there would be multiple latest elements
 ("heads") for that ID.
 
+If no elements with `id` exist, an empty array is returned.
+
 ### osm.getByVersion(version[, opts], cb)
 
 Fetch a specific OSM element by its version string. Returns `null` if not found,
