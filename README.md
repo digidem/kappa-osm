@@ -240,6 +240,14 @@ are in ISO 8601 format, as you could get from `.toISOString()`:
 
 Returns a readable stream `t` of all documents in the database of type `type`. Only the latest documents are returned, not historic data.
 
+### osm.replicate([opts])
+
+Create a duplex replication stream, that you can pipe into another kappa-osm's
+instance's replication stream. All map data is exchanged between the two peers.
+
+`opts` are passed in to [multifeed](https://github.com/noffle/multifeed)'s API
+of the same name.
+
 ### osm.on('error', function (err) {})
 
 Event emitted when an error within kappa-osm has occurred. This is very
