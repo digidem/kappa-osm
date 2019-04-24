@@ -303,7 +303,6 @@ Osm.prototype.batch = function (ops, cb) {
   function writeData (cb) {
     var batch = ops.map(osmOpToMsg)
 
-    var abc = Math.random()
     self._ready(function () {
       var key = self.writer.key.toString('hex')
       var startSeq = self.writer.length
