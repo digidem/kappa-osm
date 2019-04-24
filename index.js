@@ -113,7 +113,7 @@ Osm.prototype._getByVersion = function (version, cb) {
   if (feed) {
     feed.get(seq, cb)
   } else {
-    cb(null, null)
+    process.nextTick(cb, null, null)
   }
 }
 
