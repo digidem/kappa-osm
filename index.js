@@ -197,7 +197,7 @@ Osm.prototype.del = function (id, element, opts, cb) {
     getElms(links, function (err, elms) {
       if (err) return cb(err)
       var refs = self._mergeElementRefsAndMembers(elms)
-      var doc = Object.assign({}, element, { deleted: true, links: links })
+      var doc = Object.assign({}, element, { id: id, deleted: true, links: links })
       if (refs.refs) doc.refs = refs.refs
       else if (refs.members) doc.members = refs.members
       write(doc, cb)
