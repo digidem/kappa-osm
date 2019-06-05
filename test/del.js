@@ -24,6 +24,7 @@ test('delete', function (t) {
           {
             deleted: true,
             changeset: '10',
+            type: 'node',
             id: elm.id,
             version: elms[0].version,
             links: [elm.version]

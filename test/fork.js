@@ -222,6 +222,7 @@ test('2-peer deletion of forked nodes', function (t) {
         // C is here because it is referenced by D
         {
           id: 'C',
+          type: 'node',
           links: [versions.C[1], versions.C[2]].sort(),
           changeset: '19',
           deleted: true,
