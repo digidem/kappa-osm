@@ -46,7 +46,7 @@
     "varint": "^5.0.0"
   },
   "devDependencies": {
-    "kappa-core": "^2.6.2",
+    "kappa-core": "^3.0.0",
     "level": "^4.0.0",
     "nyc": "^11.9.0",
     "pull-stream": "^3.6.8",

@@ -33,7 +33,7 @@ function Osm (opts) {
 
   this.writer = null
   this.readyFns = []
-  this.core.feed('default', function (err, writer) {
+  this.core.writer('default', function (err, writer) {
     if (err) return self.emit('error', err)
     self.writer = writer
     self.readyFns.forEach(function (fn) { fn() })
