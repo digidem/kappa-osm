@@ -109,7 +109,7 @@ Osm.prototype._getByVersion = function (version, cb) {
   var seq = version.split('@')[1]
   var feed = this.core._logs.feed(key)
   if (feed) {
-    feed.get(seq, cb)
+    feed.get(seq, { wait:false }, cb)
   } else {
     process.nextTick(cb, null, null)
   }
