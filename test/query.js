@@ -266,11 +266,11 @@ test('relation + super-relation on out-of-bbox node of a way', function (t) {
   var queries = [
     {
       bbox: [-10, -10, +10, +10],
-      expected: [ 'A', 'B', 'C', 'D', 'E', 'F' ]
+      expected: [ 'A', 'B', 'C', 'D' ]
     },
     {
       bbox: [-10, -10, +0, +0],
-      expected: [ 'A', 'B', 'C', 'D', 'E', 'F' ]
+      expected: [ 'A', 'B', 'C', 'D' ]
     },
     {
       bbox: [-10, -10, -10, -10],
@@ -757,6 +757,42 @@ test('deleted relation', function (t) {
         t.end()
       })
     })
+  })
+})
+
+test('check that query recursiveness is limited', function (t) {
+  var db = createDb()
+
+  var data = [
+    { type: 'node',
+      id: 'A',
+      lat: '0',
+      lon: '0' },
+    { type: 'node',
+      id: 'B',
+      lat: '2',
+      lon: '2' },
+    { type: 'node',
+      id: 'C',
+      lat: '4',
+      lon: '4' },
+    { type: 'way',
+      id: 'D',
+      refs: [ 'A', 'B' ] },
+    { type: 'way',
+      id: 'E',
+      refs: [ 'B', 'C' ] },
+  ]
+
+  var queries = [
+    {
+      bbox: [-1, -1, +1, +1],
+      expected: [ 'A', 'B', 'D' ]
+    }
+  ]
+
+  queryTest(t, db, data, queries, function () {
+    t.end()
   })
 })
 
