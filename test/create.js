@@ -26,6 +26,16 @@ test('incorrect db init', function (t) {
   }
 })
 
+test('create + ready', function (t) {
+  t.plan(1)
+
+  var db = createDb()
+
+  db.ready(function () {
+    t.ok(true)
+  })
+})
+
 test('cannot create element with truthy "deleted" field', function (t) {
   t.plan(1)
 
