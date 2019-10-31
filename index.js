@@ -165,7 +165,7 @@ Osm.prototype.put = function (id, element, opts, cb) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') +
           '@' + (self.writer.length - 1)
-        var elm = Object.assign({}, element, {
+        var elm = Object.assign({}, doc, {
           version: version,
           id: id,
           links: doc.links || []
