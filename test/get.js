@@ -20,14 +20,14 @@ test('getByVersion', function (t) {
     timestamp: '2017-10-10T19:55:08.570Z'
   }
 
-  t.plan(3)
+  t.plan(4)
 
   var db = createDb()
 
   db.create(node, function (err, elm) {
     t.error(err, 'create worked')
     t.equals(elm.timestamp, node.timestamp, 'timestamp preserved')
-
+    t.equals(elm.deviceId, db.writer.key.toString('hex'), 'deviceId matches')
     db.getByVersion(elm.version, function (err, elm2) {
       t.deepEquals(elm, elm2, 'written & fetched elements match')
     })

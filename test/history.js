@@ -49,6 +49,7 @@ test('get all docs ordered by date', function (t) {
           timestamp: '2017-12-01T00:00:00.000Z',
           id: res[1].id,
           version: res[1].version,
+          deviceId: res[1].deviceId,
           links: []
         },
         {
@@ -58,6 +59,7 @@ test('get all docs ordered by date', function (t) {
           timestamp: '2018-09-01T00:00:00.000Z',
           id: res[0].id,
           version: res[0].version,
+          deviceId: res[0].deviceId,
           links: []
         },
         {
@@ -67,6 +69,7 @@ test('get all docs ordered by date', function (t) {
           timestamp: '2019-08-01T00:00:00.000Z',
           id: res[2].id,
           version: res[2].version,
+          deviceId: res[2].deviceId,
           links: []
         }
       ])
@@ -130,6 +133,7 @@ test('get all docs by type ordered by date', function (t) {
           timestamp: '2017-12-01T00:00:00.000Z',
           id: res[1].id,
           version: res[1].version,
+          deviceId: res[1].deviceId,
           links: []
         },
         {
@@ -139,6 +143,7 @@ test('get all docs by type ordered by date', function (t) {
           timestamp: '2018-09-01T00:00:00.000Z',
           id: res[0].id,
           version: res[0].version,
+          deviceId: res[0].deviceId,
           links: []
         },
         {
@@ -148,6 +153,7 @@ test('get all docs by type ordered by date', function (t) {
           timestamp: '2019-08-01T00:00:00.000Z',
           id: res[3].id,
           version: res[3].version,
+          deviceId: res[3].deviceId,
           links: []
         }
       ])
@@ -160,6 +166,7 @@ test('get all docs by type ordered by date', function (t) {
           timestamp: '2018-04-01T00:00:00.000Z',
           id: res[2].id,
           version: res[2].version,
+          deviceId: res[2].deviceId,
           links: []
         }
       ])
@@ -210,6 +217,7 @@ test('observation history', function (t) {
           created_at: '2017-12-01T00:00:00.000Z',
           id: res[1].id,
           version: res[1].version,
+          deviceId: res[1].deviceId,
           links: []
         },
         {
@@ -217,6 +225,7 @@ test('observation history', function (t) {
           created_at: '2018-09-01T00:00:00.000Z',
           id: res[0].id,
           version: res[0].version,
+          deviceId: res[0].deviceId,
           links: []
         },
         {
@@ -224,6 +233,7 @@ test('observation history', function (t) {
           created_at: '2019-08-01T00:00:00.000Z',
           id: res[3].id,
           version: res[3].version,
+          deviceId: res[3].deviceId,
           links: []
         }
       ])
@@ -275,6 +285,7 @@ test('reverse observation history', function (t) {
           created_at: '2019-08-01T00:00:00.000Z',
           id: res[3].id,
           version: res[3].version,
+          deviceId: res[3].deviceId,
           links: []
         },
         {
@@ -282,6 +293,7 @@ test('reverse observation history', function (t) {
           created_at: '2018-09-01T00:00:00.000Z',
           id: res[0].id,
           version: res[0].version,
+          deviceId: res[0].deviceId,
           links: []
         },
         {
@@ -289,6 +301,7 @@ test('reverse observation history', function (t) {
           created_at: '2017-12-01T00:00:00.000Z',
           id: res[1].id,
           version: res[1].version,
+          deviceId: res[1].deviceId,
           links: []
         }
       ])
@@ -392,6 +405,7 @@ test('get history by id', function (t) {
           lon: '4.01',
           timestamp: '2017-09-01T00:00:00.000Z',
           version: results[3][0].version,
+          deviceId: results[3][0].deviceId,
           links: [results[2][0].version]
         },
         {
@@ -401,6 +415,7 @@ test('get history by id', function (t) {
           lon: '4',
           timestamp: '2018-09-01T00:00:00.000Z',
           version: results[0][0].version,
+          deviceId: results[0][0].deviceId,
           links: []
         },
         {
@@ -410,6 +425,7 @@ test('get history by id', function (t) {
           lon: '4.4',
           timestamp: '2018-09-01T01:00:00.000Z',
           version: results[1][0].version,
+          deviceId: results[1][0].deviceId,
           links: [results[0][0].version]
         },
         {
@@ -419,6 +435,7 @@ test('get history by id', function (t) {
           lon: '4.44',
           timestamp: '2018-09-01T02:00:00.000Z',
           version: results[2][0].version,
+          deviceId: results[2][0].deviceId,
           links: [results[1][0].version]
         }
       ])
@@ -433,6 +450,7 @@ test('get history by id', function (t) {
           lon: '2',
           timestamp: '2017-12-01T00:00:00.000Z',
           version: results[0][1].version,
+          deviceId: results[0][1].deviceId,
           links: []
         },
         {
@@ -442,6 +460,7 @@ test('get history by id', function (t) {
           lon: '2.22',
           timestamp: '2017-12-01T01:00:00.000Z',
           version: results[2][1].version,
+          deviceId: results[2][1].deviceId,
           links: [results[0][1].version]
         }
       ])

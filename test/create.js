@@ -97,7 +97,6 @@ test('create good nodes', function (t) {
   nodes.forEach(function (node, i) {
     db.create(node, function (err, elm) {
       t.error(err)
-      console.log('elm', elm)
       t.ok(elm)
       if (i === 0) {
         t.equal(elm.lat, '-11')

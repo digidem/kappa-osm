@@ -75,7 +75,6 @@ test('type: get nodes (heads only)', function (t) {
       t.ifError(err)
       collect(db.byType('node'), function (err, res) {
         t.ifError(err)
-        console.log(res)
         t.equal(res.length, 1)
         t.equal(res[0].id, elm1.id)
         t.end()

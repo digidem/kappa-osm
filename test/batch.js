@@ -135,6 +135,7 @@ test('create + delete nodes', function (t) {
       t.equals(elms.length, 2)
       t.notEqual(elms[0].version, elmVersion)
       delete elms[0].version
+      delete elms[0].deviceId
       t.deepEquals(elms[0], { id: elmId, deleted: true, changeset: '10', links: [elmVersion] })
       clearIdVersion(elms[1])
       t.deepEquals(elms[1], { type: 'node', changeset: '8', lat: '0', lon: '0', links: [] })
@@ -144,6 +145,7 @@ test('create + delete nodes', function (t) {
         t.equals(elms.length, 1)
         t.notEqual(elms[0].version, elmVersion)
         delete elms[0].version
+        delete elms[0].deviceId
         t.deepEquals(elms[0], { id: elmId, deleted: true, changeset: '10', links: [elmVersion] })
       })
     })
@@ -261,6 +263,7 @@ test('batch: deleted relation', function (t) {
 function clearIdVersion (elm) {
   delete elm.id
   delete elm.version
+  delete elm.deviceId
 }
 
 function cmpId (a, b) {
