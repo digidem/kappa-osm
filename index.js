@@ -144,7 +144,7 @@ Osm.prototype.put = function (id, element, opts, cb) {
   var errs = checkElement(element, 'put')
   if (errs.length) return cb(errs[0])
 
-  var doc = Object.assign({ timestamp: new Date().toISOString() }, element, { id: id })
+  var doc = Object.assign({}, element, { id: id, timestamp: new Date().toISOString() })
 
   // set links
   if (opts.links) {

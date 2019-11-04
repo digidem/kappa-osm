@@ -26,7 +26,7 @@ test('getByVersion', function (t) {
 
   db.create(node, function (err, elm) {
     t.error(err, 'create worked')
-    t.equals(elm.timestamp, node.timestamp, 'timestamp preserved')
+    t.notEquals(elm.timestamp, node.timestamp, 'timestamp overwritten')
     t.equals(elm.deviceId, db.writer.key.toString('hex'), 'deviceId matches')
     db.getByVersion(elm.version, function (err, elm2) {
       t.deepEquals(elm, elm2, 'written & fetched elements match')
