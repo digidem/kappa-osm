@@ -107,7 +107,6 @@ test.skip('revive deleted nodes during a fork', function (t) {
       osm1.query(q, function (err, res) {
         t.error(err)
         t.deepEqual(sortLinks(res).sort(idcmp), expected)
-        console.log(res)
       })
     }
   })

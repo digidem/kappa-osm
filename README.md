@@ -63,8 +63,9 @@ created node with id 58261217205dc19b
     lon: '1.3',
     tags: { feature: 'water fountain' },
     changeset: 'abcdef' },
+    version: '366212350b5996f944df9df25e679a98545bdac98f507a06f493d167ff9d5f14@0',
     links: [],
-    version: '366212350b5996f944df9df25e679a98545bdac98f507a06f493d167ff9d5f14@0'
+    deviceId: '366212350b5996f944df9df25e679a98545bdac98f507a06f493d167ff9d5f14'
   }
 ]
 ```
@@ -88,8 +89,8 @@ Expected `opts` include:
 ### osm.create(element, cb)
 
 Create the new OSM element `element` and add it to the database. The resulting
-element, populated with the `id` and `version` fields, is returned by the
-callback `cb`.
+element, populated with the `id`, `version`, and `deviceId` fields, is returned
+by the callback `cb`.
 
 ### osm.get(id, cb)
 
@@ -120,7 +121,8 @@ replace. This happens automatically, but if an array of versions are passed
 into `opts.links`, those elements will be replaced with this newer version
 instead of the default current heads.
 
-`cb` is called with the new element, including `id` and `version` properties.
+`cb` is called with the new element, including `id`, `version`, and `deviceId`
+properties.
 
 ### osm.del(id, value, cb)
 
@@ -270,7 +272,8 @@ Documents (OSM elements, observations, etc) have a common format:
     tags: Object,
     changeset: String,
     links: Array<String>,
-    version: String
+    version: String,
+    deviceId: String
   }
 ```
 

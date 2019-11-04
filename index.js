@@ -125,7 +125,7 @@ Osm.prototype.getByVersion = function (version, opts, cb) {
   this._getByVersion(version, function (err, doc) {
     if (err) return cb(err)
     if (!doc) return cb(null, null)
-    doc = Object.assign({}, doc, { version: version })
+    doc = Object.assign({}, doc, { version: version, deviceId: versionToDeviceId(version) })
     cb(null, doc)
   })
 }
@@ -165,8 +165,9 @@ Osm.prototype.put = function (id, element, opts, cb) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') +
           '@' + (self.writer.length - 1)
-        var elm = Object.assign({}, element, {
+        var elm = Object.assign({}, doc, {
           version: version,
+          deviceId: versionToDeviceId(version),
           id: id,
           links: doc.links || []
         })
@@ -311,7 +312,8 @@ Osm.prototype.batch = function (ops, cb) {
           var version = key + '@' + (startSeq + n)
           return Object.assign({}, doc, {
             id: doc.id,
-            version: version
+            version: version,
+            deviceId: versionToDeviceId(version)
           })
         })
         cb(null, res)
@@ -367,6 +369,7 @@ Osm.prototype.byType = function (type, opts) {
       if (err) return next(err)
       var res = Object.assign(elm, {
         version: row.version,
+        deviceId: versionToDeviceId(row.version),
         id: row.id
       })
       next(null, res)
@@ -486,4 +489,8 @@ Osm.prototype.history = function (opts) {
   } else {
     return this.core.api.history.all(opts)
   }
+}
+
+function versionToDeviceId (version) {
+  return version.split('@')[0]
 }
