@@ -262,8 +262,8 @@ function replicate (osm0, osm1, cb) {
   osm1.ready(onready)
   function onready () {
     if (--pending !== 0) return
-    var r0 = osm0.replicate()
-    var r1 = osm1.replicate()
+    var r0 = osm0.replicate(true)
+    var r1 = osm1.replicate(false)
     pending = 2
     r0.pipe(r1).pipe(r0)
     r0.once('end', onend)
