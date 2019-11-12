@@ -406,8 +406,8 @@ Osm.prototype.query = function (bbox, opts, cb) {
   return res
 }
 
-Osm.prototype.createReplicationStream = function (opts) {
-  return this.core.replicate(opts)
+Osm.prototype.createReplicationStream = function (isInitiator, opts) {
+  return this.core.replicate(isInitiator, opts)
 }
 Osm.prototype.replicate = Osm.prototype.createReplicationStream
 

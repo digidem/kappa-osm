@@ -242,11 +242,13 @@ are in ISO 8601 format, as you could get from `.toISOString()`:
 
 Returns a readable stream `t` of all documents in the database of type `type`. Only the latest documents are returned, not historic data.
 
-### var stream = osm.replicate([opts])
+### var stream = osm.replicate(isInitiator, [opts])
 
 Create a duplex replication stream, that you can pipe into another kappa-osm's
 instance's replication stream. The stream ends once all map data is exchanged
 between the two peers.
+
+Ensure that `isInitiator` to `true` to one side, and `false` on the other. This is necessary for setting up the encryption mechanism.
 
 `opts` are passed in to [multifeed](https://github.com/noffle/multifeed)'s API
 of the same name.
