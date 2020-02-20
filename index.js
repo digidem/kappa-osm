@@ -30,6 +30,9 @@ function Osm (opts) {
     self.emit('error', err)
   })
   this.index = opts.index
+  this.index.on('error', function (err) {
+    self.emit('error', err)
+  })
 
   this.writer = null
   this.readyFns = []
