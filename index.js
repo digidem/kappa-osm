@@ -367,6 +367,7 @@ Osm.prototype.byType = function (type, opts) {
   var fetch = through.obj(function (row, _, next) {
     self._getByVersion(row.version, function (err, elm) {
       if (err) return next(err)
+      if (!elm) return next()
       var res = Object.assign(elm, {
         version: row.version,
         deviceId: versionToDeviceId(row.version),
