@@ -86,6 +86,9 @@ Expected `opts` include:
   [random-access-storage](https://github.com/random-access-storage) instance to
   its callback `cb`
 
+If `index` is falsy, the default indexes will not be created. You can still
+create indexes in userland with the `osm.core.use` function.
+
 ### osm.create(element, cb)
 
 Create the new OSM element `element` and add it to the database. The resulting

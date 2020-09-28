@@ -20,17 +20,12 @@ var createHistoryIndex = require('./lib/history-index.js')
 function Osm (opts) {
   if (!(this instanceof Osm)) return new Osm(opts)
   if (!opts.core) throw new Error('missing param "core"')
-  if (!opts.index) throw new Error('missing param "index"')
   if (!opts.storage) throw new Error('missing param "storage"')
 
   var self = this
 
   this.core = opts.core
   this.core.on('error', function (err) {
-    self.emit('error', err)
-  })
-  this.index = opts.index
-  this.index.on('error', function (err) {
     self.emit('error', err)
   })
 
@@ -43,16 +38,23 @@ function Osm (opts) {
     self.readyFns = []
   })
 
-  // Create indexes
-  var kv = umkv(sub(this.index, 'kvu'))
-  var bkd = createBkdIndex(this.core, sub(this.index, 'bkd'), kv, opts.storage)
-  this.core.use('kv', 2, createKvIndex(kv, sub(this.index, 'kvi')))
-  this.core.use('refs', 2, createRefsIndex(sub(this.index, 'refs')))
-  this.core.use('changeset', 2, createChangesetIndex(sub(this.index, 'ch')))
-  this.core.use('geo', 2, bkd)
-  this.core.use('history', 2, createHistoryIndex(this, sub(this.index, 'h')))
-  this.core.use('types', 2, createTypesIndex(sub(this.index, 't')))
+  if (opts.index) {
+    this.index = opts.index
+    this.index.on('error', function (err) {
+      self.emit('error', err)
+    })
+    // Create indexes
+    var kv = umkv(sub(this.index, 'kvu'))
+    var bkd = createBkdIndex(this.core, sub(this.index, 'bkd'), kv, opts.storage)
+    this.core.use('kv', 2, createKvIndex(kv, sub(this.index, 'kvi')))
+    this.core.use('refs', 2, createRefsIndex(sub(this.index, 'refs')))
+    this.core.use('changeset', 2, createChangesetIndex(sub(this.index, 'ch')))
+    this.core.use('geo', 2, bkd)
+    this.core.use('history', 2, createHistoryIndex(this, sub(this.index, 'h')))
+    this.core.use('types', 2, createTypesIndex(sub(this.index, 't')))
+  }
 }
+
 Osm.prototype = Object.create(EventEmitter.prototype)
 
 // Is the log ready for writing?
