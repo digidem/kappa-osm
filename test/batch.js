@@ -146,6 +146,7 @@ test('create + delete nodes', function (t) {
         t.notEqual(elms[0].version, elmVersion)
         delete elms[0].version
         delete elms[0].deviceId
+        delete elms[0].authorId
         t.deepEquals(elms[0], { id: elmId, deleted: true, changeset: '10', links: [elmVersion] })
       })
     })

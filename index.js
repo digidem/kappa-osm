@@ -16,6 +16,7 @@ var createTypesIndex = require('./lib/types-index.js')
 var createKvIndex = require('./lib/kv-index.js')
 var createBkdIndex = require('./lib/bkd-index.js')
 var createHistoryIndex = require('./lib/history-index.js')
+var createAuthorIndex = require('./lib/author-index.js')
 
 function Osm (opts) {
   if (!(this instanceof Osm)) return new Osm(opts)
@@ -52,6 +53,7 @@ function Osm (opts) {
   this.core.use('geo', 2, bkd)
   this.core.use('history', 2, createHistoryIndex(this, sub(this.index, 'h')))
   this.core.use('types', 2, createTypesIndex(sub(this.index, 't')))
+  this.core.use('author', 2, createAuthorIndex(sub(this.index, 'a')))
 }
 Osm.prototype = Object.create(EventEmitter.prototype)
 
@@ -76,6 +78,13 @@ Osm.prototype.create = function (element, cb) {
   var id = utils.generateId()
 
   this.put(id, element, cb)
+}
+
+Osm.prototype._getAuthor = function (id, cb) {
+  this.core.api.author.get(id, function (err, authorId) {
+    if (err) return cb(err)
+    return cb(null, authorId)
+  })
 }
 
 // OsmId -> [OsmElement]
@@ -120,6 +129,7 @@ Osm.prototype._getByVersion = function (version, cb) {
 
 // OsmVersion -> [OsmElement]
 Osm.prototype.getByVersion = function (version, opts, cb) {
+  var self = this
   if (typeof opts === 'function' && !cb) {
     cb = opts
     opts = {}
@@ -128,8 +138,16 @@ Osm.prototype.getByVersion = function (version, opts, cb) {
   this._getByVersion(version, function (err, doc) {
     if (err) return cb(err)
     if (!doc) return cb(null, null)
-    doc = Object.assign({}, doc, { version: version, deviceId: versionToDeviceId(version) })
-    cb(null, doc)
+    console.log(doc.id)
+    self._getAuthor(doc.id, function (err, authorId) {
+      if (err) return cb(err)
+      doc = Object.assign({}, doc, {
+        version: version,
+        deviceId: versionToDeviceId(version),
+        authorId
+      })
+      cb(null, doc)
+    })
   })
 }
 
@@ -168,10 +186,12 @@ Osm.prototype.put = function (id, element, opts, cb) {
         if (err) return cb(err)
         var version = self.writer.key.toString('hex') +
           '@' + (self.writer.length - 1)
+        var deviceId = versionToDeviceId(version)
         var elm = Object.assign({}, doc, {
           version: version,
-          deviceId: versionToDeviceId(version),
+          deviceId: deviceId,
           id: id,
+          authorId: deviceId,
           links: doc.links || []
         })
         cb(null, elm)

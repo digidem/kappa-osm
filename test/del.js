@@ -27,6 +27,7 @@ test('delete', function (t) {
             type: 'node',
             id: elm.id,
             deviceId: elms[0].deviceId,
+            authorId: elms[0].authorId,
             version: elms[0].version,
             links: [elm.version]
           }
