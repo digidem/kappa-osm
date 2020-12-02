@@ -81,10 +81,7 @@ Osm.prototype.create = function (element, cb) {
 }
 
 Osm.prototype._getAuthor = function (id, cb) {
-  this.core.api.author.get(id, function (err, authorId) {
-    if (err) return cb(err)
-    return cb(null, authorId)
-  })
+  this.core.api.author.get(id, cb)
 }
 
 // OsmId -> [OsmElement]
