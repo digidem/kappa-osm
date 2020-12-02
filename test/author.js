@@ -1,7 +1,7 @@
 var test = require('tape')
 var createDb = require('./lib/create-db')
 var setup = require('./lib/setup')
-var pump = require('pump')
+var replicate = require('./lib/replicate')
 
 test('original entry has authorId set', function (t) {
   t.plan(4)
@@ -175,23 +175,6 @@ test('edit performed by a different author', function (t) {
     }
   })
 })
-
-// TODO: create utility function + share across tests
-function replicate (osm0, osm1, cb) {
-  osm0.ready(() => {
-    osm1.ready(onready)
-  })
-  function onready () {
-    var r0 = osm0.replicate(true)
-    var r1 = osm1.replicate(false)
-    pump(r0, r1, r0, err => {
-      if (err) return cb(err)
-      osm0.ready(() => {
-        osm1.ready(cb)
-      })
-    })
-  }
-}
 
 // Write multiple batches of batch writes.
 // So, Array<Array<WriteOp>>
