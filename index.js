@@ -135,7 +135,6 @@ Osm.prototype.getByVersion = function (version, opts, cb) {
   this._getByVersion(version, function (err, doc) {
     if (err) return cb(err)
     if (!doc) return cb(null, null)
-    console.log(doc.id)
     self._getAuthor(doc.id, function (err, authorId) {
       if (err) return cb(err)
       doc = Object.assign({}, doc, {
