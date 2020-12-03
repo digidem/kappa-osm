@@ -26,9 +26,7 @@
   ],
   "dependencies": {
     "collect-stream": "^1.2.1",
-    "comparable-storable-types": "^1.0.0",
     "d64": "^1.0.0",
-    "deepmerge": "^4.1.1",
     "duplexify": "^4.1.1",
     "kappa-view": "^3.0.0",
     "once": "^1.4.0",
