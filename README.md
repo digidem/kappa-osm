@@ -65,7 +65,8 @@ created node with id 58261217205dc19b
     changeset: 'abcdef' },
     version: '366212350b5996f944df9df25e679a98545bdac98f507a06f493d167ff9d5f14@0',
     links: [],
-    deviceId: '366212350b5996f944df9df25e679a98545bdac98f507a06f493d167ff9d5f14'
+    deviceId: '366212350b5996f944df9df25e679a98545bdac98f507a06f493d167ff9d5f14',
+    authorId: '366212350b5996f944df9df25e679a98545bdac98f507a06f493d167ff9d5f14'
   }
 ]
 ```
@@ -89,8 +90,11 @@ Expected `opts` include:
 ### osm.create(element, cb)
 
 Create the new OSM element `element` and add it to the database. The resulting
-element, populated with the `id`, `version`, and `deviceId` fields, is returned
+element, populated with the `id`, `version`, and `authorId`, and `deviceId` fields, is returned
 by the callback `cb`.
+
+`authorId` is the original author's deviceId, while `deviceId` represents the device
+that most recently edited the element.
 
 ### osm.get(id, cb)
 
@@ -275,9 +279,13 @@ Documents (OSM elements, observations, etc) have a common format:
     changeset: String,
     links: Array<String>,
     version: String,
-    deviceId: String
+    deviceId: String,
+    authorId: String
   }
 ```
+
+*Note: `authorId` is the original author's deviceId, while `deviceId` represents the device
+that most recently edited the element.*
 
 **TODO**: talk about forking data & forking architecture*
 

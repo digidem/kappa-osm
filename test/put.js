@@ -189,6 +189,7 @@ test('soft delete a node', function (t) {
         delete elms[0].version
         delete elms[0].deviceId
         delete elms[0].timestamp
+        delete elms[0].authorId
         t.deepEquals(elms[0].links, [elm.version])
         delete elms[0].links
         t.deepEquals(elms[0], nodeDeletion)

@@ -41,6 +41,7 @@ test('get all docs ordered by date', function (t) {
     t.error(err)
     collect(db.history(), function (err, docs) {
       t.error(err)
+      deleteAuthors(docs)
       t.deepEqual(docs, [
         {
           type: 'node',
@@ -125,6 +126,7 @@ test('get all docs by type ordered by date', function (t) {
     t.error(err)
     collect(db.history({ type: 'node' }), function (err, docs) {
       t.error(err)
+      deleteAuthors(docs)
       t.deepEqual(docs, [
         {
           type: 'node',
@@ -160,6 +162,7 @@ test('get all docs by type ordered by date', function (t) {
     })
     collect(db.history({ type: 'way' }), function (err, docs) {
       t.error(err)
+      deleteAuthors(docs)
       t.deepEqual(docs, [
         {
           type: 'way',
@@ -211,6 +214,7 @@ test('observation history', function (t) {
     t.error(err)
     collect(db.history({ type: 'observation' }), function (err, docs) {
       t.error(err)
+      deleteAuthors(docs)
       t.deepEqual(docs, [
         {
           type: 'observation',
@@ -279,6 +283,7 @@ test('reverse observation history', function (t) {
     t.error(err)
     collect(db.history({ type: 'observation', reverse: true }), function (err, docs) {
       t.error(err)
+      deleteAuthors(docs)
       t.deepEqual(docs, [
         {
           type: 'observation',
@@ -397,6 +402,7 @@ test('get history by id', function (t) {
   function check () {
     collect(db.history({ id: 'A' }), function (err, docs) {
       t.error(err)
+      deleteAuthors(docs)
       t.deepEqual(docs, [
         {
           type: 'node',
@@ -442,6 +448,7 @@ test('get history by id', function (t) {
     })
     collect(db.history({ id: 'B' }), function (err, docs) {
       t.error(err)
+      deleteAuthors(docs)
       t.deepEqual(docs, [
         {
           type: 'node',
@@ -494,3 +501,10 @@ test('exclusive id and type history sorting options', function (t) {
     })
   })
 })
+
+function deleteAuthors (docs) {
+  for (var i in docs) {
+    var doc = docs[i]
+    delete doc.authorId
+  }
+}
