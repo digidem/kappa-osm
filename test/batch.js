@@ -5,7 +5,7 @@ var setup = require('./lib/setup')
 test('create nodes', function (t) {
   var db = createDb()
 
-  t.plan(2)
+  t.plan(4)
 
   var nodes = [
     {
@@ -29,11 +29,14 @@ test('create nodes', function (t) {
       value: node
     }
   })
+  var batchClone = JSON.parse(JSON.stringify(batch))
+  t.deepEquals(batch, batchClone, 'Clone deep equals before batch')
 
   db.batch(batch, function (err, elms) {
     t.error(err)
     elms.forEach(clearIdVersion)
     t.deepEquals(elms, nodes)
+    t.deepEquals(batch, batchClone, 'Batch ops not mutated by batch()')
   })
 })
 
