@@ -23,6 +23,10 @@ test('create nodes', function (t) {
     }
   ]
 
+  var updatedWithLinks = nodes
+  updatedWithLinks[0].links = []
+  updatedWithLinks[1].links = []
+
   var batch = nodes.map(function (node) {
     return {
       type: 'put',
@@ -35,7 +39,7 @@ test('create nodes', function (t) {
   db.batch(batch, function (err, elms) {
     t.error(err)
     elms.forEach(clearIdVersion)
-    t.deepEquals(elms, nodes)
+    t.deepEquals(elms, updatedWithLinks)
     t.deepEquals(batch, batchClone, 'Batch ops not mutated by batch()')
   })
 })
