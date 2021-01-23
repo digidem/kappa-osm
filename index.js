@@ -274,7 +274,7 @@ Osm.prototype.batch = function (ops, cb) {
   if (!ops || !ops.length) return cb()
 
   var self = this
-  var mutOps = ops
+  var mutOps = utils.deepClone(ops)
   cb = once(cb)
 
   populateWayRelationRefs(function (err) {
