@@ -1,6 +1,7 @@
 var test = require('tape')
 var createDb = require('./lib/create-db')
 var setup = require('./lib/setup')
+var utils = require('../lib/utils')
 
 test('create nodes', function (t) {
   var db = createDb()
@@ -23,7 +24,7 @@ test('create nodes', function (t) {
     }
   ]
 
-  var updatedWithLinks = nodes
+  var updatedWithLinks = utils.deepClone(nodes)
   updatedWithLinks[0].links = []
   updatedWithLinks[1].links = []
 
