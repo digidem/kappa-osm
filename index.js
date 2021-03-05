@@ -7,6 +7,7 @@ var uniq = require('uniq')
 var EventEmitter = require('events').EventEmitter
 var through = require('through2')
 var pumpify = require('pumpify')
+var clone = require('clone')
 
 var umkv = require('unordered-materialized-kv')
 var checkElement = require('./lib/check-element')
@@ -274,7 +275,7 @@ Osm.prototype.batch = function (ops, cb) {
   if (!ops || !ops.length) return cb()
 
   var self = this
-  var mutOps = utils.deepClone(ops)
+  var mutOps = clone(ops)
   cb = once(cb)
 
   populateWayRelationRefs(function (err) {

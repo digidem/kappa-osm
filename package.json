@@ -25,6 +25,7 @@
     "kappa"
   ],
   "dependencies": {
+    "clone": "^2.1.2",
     "collect-stream": "^1.2.1",
     "d64": "^1.0.0",
     "duplexify": "^4.1.1",
