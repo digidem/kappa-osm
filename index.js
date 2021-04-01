@@ -7,6 +7,7 @@ var uniq = require('uniq')
 var EventEmitter = require('events').EventEmitter
 var through = require('through2')
 var pumpify = require('pumpify')
+var clone = require('clone')
 
 var umkv = require('unordered-materialized-kv')
 var checkElement = require('./lib/check-element')
@@ -274,6 +275,7 @@ Osm.prototype.batch = function (ops, cb) {
   if (!ops || !ops.length) return cb()
 
   var self = this
+  var mutOps = clone(ops)
   cb = once(cb)
 
   populateWayRelationRefs(function (err) {
@@ -288,10 +290,10 @@ Osm.prototype.batch = function (ops, cb) {
   function populateWayRelationRefs (cb) {
     var pending = 0
     var error
-    for (var i = 0; i < ops.length; i++) {
-      if (ops[i].type === 'del') {
+    for (var i = 0; i < mutOps.length; i++) {
+      if (mutOps[i].type === 'del') {
         pending++
-        updateRefs(ops[i].id, ops[i].value.links || [], ops[i].value, function (err) {
+        updateRefs(mutOps[i].id, mutOps[i].value.links || [], mutOps[i].value, function (err) {
           if (err) error = err
           if (!--pending) cb(error)
         })
@@ -302,25 +304,25 @@ Osm.prototype.batch = function (ops, cb) {
 
   function populateMissingLinks (cb) {
     var pending = 1
-    for (var i = 0; i < ops.length; i++) {
-      if (!ops[i].id) {
-        ops[i].id = utils.generateId()
-        ops[i].value.links = []
-      } else if (!ops[i].value.links) {
+    for (var i = 0; i < mutOps.length; i++) {
+      if (!mutOps[i].id) {
+        mutOps[i].id = utils.generateId()
+        mutOps[i].value.links = []
+      } else if (!mutOps[i].value.links) {
         pending++
         ;(function get (op) {
           self.core.api.kv.get(op.id, function (err, versions) {
             op.value.links = versions || []
             if (!--pending) cb(err)
           })
-        })(ops[i])
+        })(mutOps[i])
       }
     }
     if (!--pending) cb()
   }
 
   function writeData (cb) {
-    var batch = ops.map(osmOpToMsg)
+    var batch = mutOps.map(osmOpToMsg)
 
     self._ready(function () {
       var key = self.writer.key.toString('hex')

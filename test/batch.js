@@ -1,11 +1,12 @@
 var test = require('tape')
 var createDb = require('./lib/create-db')
 var setup = require('./lib/setup')
+var clone = require('clone')
 
 test('create nodes', function (t) {
   var db = createDb()
 
-  t.plan(2)
+  t.plan(4)
 
   var nodes = [
     {
@@ -23,17 +24,24 @@ test('create nodes', function (t) {
     }
   ]
 
+  var updatedWithLinks = clone(nodes)
+  updatedWithLinks[0].links = []
+  updatedWithLinks[1].links = []
+
   var batch = nodes.map(function (node) {
     return {
       type: 'put',
       value: node
     }
   })
+  var batchClone = clone(batch)
+  t.deepEquals(batch, batchClone, 'Clone deep equals before batch')
 
   db.batch(batch, function (err, elms) {
     t.error(err)
     elms.forEach(clearIdVersion)
-    t.deepEquals(elms, nodes)
+    t.deepEquals(elms, updatedWithLinks)
+    t.deepEquals(batch, batchClone, 'Batch ops not mutated by batch()')
   })
 })
 
