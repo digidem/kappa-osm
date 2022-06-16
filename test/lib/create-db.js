@@ -8,8 +8,9 @@ var path = require('path')
 module.exports = createOne
 module.exports.two = createTwo
 
-function createOne () {
-  var core = kappa(ram, { valueEncoding: 'json' })
+function createOne (opts) {
+  opts = opts || {}
+  var core = kappa(ram, { valueEncoding: 'json', sparse: opts.sparse })
   var dir = path.join(tmp, 'kappa-osm-' + String(Math.random()).substring(10))
   return Osm({
     core: core,
@@ -18,10 +19,14 @@ function createOne () {
   })
 }
 
-function createTwo (cb) {
-  var a = createOne()
+function createTwo (opts, cb) {
+  if (!cb) {
+    cb = opts
+    opts = undefined
+  }
+  var a = createOne(opts)
   a.ready(function () {
-    var b = createOne()
+    var b = createOne(opts)
     b.ready(function () {
       cb(a, b)
     })

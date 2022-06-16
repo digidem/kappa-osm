@@ -1,9 +1,40 @@
 var test = require('tape')
 var createDb = require('./lib/create-db')
 
-test('missing block', function (t) {
-  // t.plan(4)
-  var batch0 = [
+test('arbitrary missing block', function (t) {
+	t.plan(3)
+
+	var batch = [
+    {
+      type: 'put',
+      id: 'A',
+      value: { type: 'node', refs: [], links: [], changeset: '1' }
+    }
+  ]
+
+	createDb.two(function (osm0, osm1) {
+		replicate(osm0, osm1, function () {
+			const feeds = osm0.core.feeds()
+			const feed = feeds[0]
+			batch[0].value.links.push(feed.key.toString('hex')+'@1')
+
+			osm1.on('error', function (error) {
+				console.log('got an error!', error)
+				t.error(error, 'error emitted')
+			})
+
+			osm1.batch(batch, function (error, docs) {
+				t.error(error, 'no batch error')
+				t.ok(docs.length === 1, 'correct batch docs length')
+			})
+		})
+  })
+})
+
+test('arbitrary missing block, continue indexing', function (t) {
+  t.plan(3)
+
+  var batch = [
     {
       type: 'put',
       id: 'A',
@@ -25,36 +56,23 @@ test('missing block', function (t) {
       value: { type: 'way', refs: [ 'A', 'B', 'C' ], changeset: '15' }
     }
   ]
-  var batch1 = [
-    {
-      type: 'put',
-      id: 'D',
-      value: { type: 'way', refs: [ 'A', 'B' ], links: [], changeset: '16' }
-    }
-  ]
-  var versions = { A: [], B: [], C: [], D: [] }
+
   createDb.two(function (osm0, osm1) {
-    osm0.batch(batch0, function (err, docs) {
-      t.error(err)
-      docs.forEach(function (doc) {
-        versions[doc.id].push(doc.version)
-      })
-      replicate(osm0, osm1, function () {
-				batch1[0].value.links.push(osm0.core._logs._feeds.default.key.toString('hex')+'@5')
+    replicate(osm0, osm1, function () {
+			const feeds = osm0.core.feeds()
+			const feed = feeds[0]
+			batch[0].value.links = [feed.key.toString('hex')+'@5']
 
-				osm1.on('error', function (error) {
-					console.log('error', error)
-					t.error(error)
-					t.end() // todo: remove and use t.plan
-				})
+			osm1.on('error', function (error) {
+				console.log('got an error!', error)
+				t.error(error, 'error emitted')
+			})
 
-        osm1.batch(batch1, function (err, docs) {
-					osm1.ready(() => {
-						// t.end()
-					})
-        })
-      })
-    })
+			osm1.batch(batch, function (error, docs) {
+				t.error(error, 'no batch error')
+				t.ok(docs.length === 4, 'correct batch docs length')
+			})
+		})
   })
 })
 
