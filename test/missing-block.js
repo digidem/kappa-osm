@@ -19,8 +19,7 @@ test('arbitrary missing block', function (t) {
 			batch[0].value.links.push(feed.key.toString('hex')+'@1')
 
 			osm1.on('error', function (error) {
-				console.log('got an error!', error)
-				t.error(error, 'error emitted')
+				t.ok(error && error.message === 'Block not downloaded', 'Block not downloaded error emitted')
 			})
 
 			osm1.batch(batch, function (error, docs) {
@@ -64,8 +63,7 @@ test('arbitrary missing block, continue indexing', function (t) {
 			batch[0].value.links = [feed.key.toString('hex')+'@5']
 
 			osm1.on('error', function (error) {
-				console.log('got an error!', error)
-				t.error(error, 'error emitted')
+				t.ok(error && error.message === 'Block not downloaded', 'Block not downloaded error emitted')
 			})
 
 			osm1.batch(batch, function (error, docs) {
